@@ -7,9 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
-model HealthCheck {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at")
+enum EUserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+  USER
 
-  @@map("health_checks")
+  @@map("user_role")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  password        String
+  role            EUserRole @default(USER)
+  avatarUrl       String?   @map("avatar_url")
+  active          Boolean   @default(true)
+  tokenValidAfter DateTime? @map("token_valid_after")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([role, active])
+  @@map("users")
 }
