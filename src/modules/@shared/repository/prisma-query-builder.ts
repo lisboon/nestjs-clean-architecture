@@ -11,7 +11,7 @@ export default abstract class PrismaQueryBuilder {
   }[];
   abstract orFields: (string | { name: string })[];
   abstract searchFields: string[];
-  protected numberSearchFields: { field: string; type: 'decimal' | 'equals' }[];
+  protected numberSearchFields: { field: string; type: "decimal" | "equals" }[];
   protected relationSearchFields?: {
     field: string;
     relation: string;
@@ -56,15 +56,20 @@ export default abstract class PrismaQueryBuilder {
     const where: any = {};
 
     this.whereFields.forEach((field) => {
-      if (this.filterParam[field] !== undefined || this.filterParam[field] === false) {
+      if (
+        this.filterParam[field] !== undefined ||
+        this.filterParam[field] === false
+      ) {
         switch (true) {
-          case this.filterParam[field] === 'true' || this.filterParam[field] === true:
+          case this.filterParam[field] === "true" ||
+            this.filterParam[field] === true:
             where[field] = true;
             break;
-          case this.filterParam[field] === 'false' || this.filterParam[field] === false:
+          case this.filterParam[field] === "false" ||
+            this.filterParam[field] === false:
             where[field] = false;
             break;
-          case this.filterParam[field] === 'null':
+          case this.filterParam[field] === "null":
             where[field] = null;
             break;
           case !Number.isNaN(+this.filterParam[field]):
@@ -95,11 +100,11 @@ export default abstract class PrismaQueryBuilder {
     const or: any = [];
 
     this.orFields.forEach((field) => {
-      if (typeof field !== 'string' && this.filterParam[field.name]) {
+      if (typeof field !== "string" && this.filterParam[field.name]) {
         or.push(this.filterParam[field.name]);
         return;
       }
-      if (typeof field === 'string' && this.filterParam[field] !== undefined) {
+      if (typeof field === "string" && this.filterParam[field] !== undefined) {
         or.push({ [field]: this.filterParam[field] });
       }
     });
@@ -126,13 +131,13 @@ export default abstract class PrismaQueryBuilder {
     this.numberSearchFields?.forEach(({ field, type }) => {
       if (this.filterParam[field]) {
         switch (type) {
-          case 'decimal':
+          case "decimal":
             search[field] = {
               gte: Math.trunc(+this.filterParam[field]),
               lt: Math.trunc(+this.filterParam[field]) + 1,
             };
             break;
-          case 'equals':
+          case "equals":
             search[field] = +this.filterParam[field];
             break;
         }
@@ -144,23 +149,27 @@ export default abstract class PrismaQueryBuilder {
   buildRelationSearch() {
     const search: any = {};
 
-    this.relationSearchFields?.forEach(({ relation, field, starts, multiple }) => {
-      if (this.filterParam[`${relation}_${field}`]) {
-        search[relation] = multiple
-          ? {
-              some: {
-                [field]: {
-                  [starts ? 'startsWith' : 'contains']: this.filterParam[`${relation}_${field}`],
+    this.relationSearchFields?.forEach(
+      ({ relation, field, starts, multiple }) => {
+        if (this.filterParam[`${relation}_${field}`]) {
+          search[relation] = multiple
+            ? {
+                some: {
+                  [field]: {
+                    [starts ? "startsWith" : "contains"]:
+                      this.filterParam[`${relation}_${field}`],
+                  },
                 },
-              },
-            }
-          : {
-              [field]: {
-                [starts ? 'startsWith' : 'contains']: this.filterParam[`${relation}_${field}`],
-              },
-            };
-      }
-    });
+              }
+            : {
+                [field]: {
+                  [starts ? "startsWith" : "contains"]:
+                    this.filterParam[`${relation}_${field}`],
+                },
+              };
+        }
+      },
+    );
 
     return search;
   }
@@ -184,41 +193,49 @@ export default abstract class PrismaQueryBuilder {
 
     const include: any = {};
 
-    this.relationFilter.forEach(({ relation, field, multiple, exists, array, subRelation }) => {
-      if (exists && this.filterParam[relation]) {
-        include[relation] = multiple ? { some: {} } : { isNot: null };
-        return include;
-      }
+    this.relationFilter.forEach(
+      ({ relation, field, multiple, exists, array, subRelation }) => {
+        if (exists && this.filterParam[relation]) {
+          include[relation] = multiple ? { some: {} } : { isNot: null };
+          return include;
+        }
 
-      if (exists && subRelation && this.filterParam[`${relation}_${subRelation}`]) {
-        include[relation] = include[relation] || {};
-        include[relation][subRelation] = multiple ? { some: {} } : { isNot: null };
-        return include;
-      }
+        if (
+          exists &&
+          subRelation &&
+          this.filterParam[`${relation}_${subRelation}`]
+        ) {
+          include[relation] = include[relation] || {};
+          include[relation][subRelation] = multiple
+            ? { some: {} }
+            : { isNot: null };
+          return include;
+        }
 
-      if (this.filterParam[`${relation}_${field}`] !== undefined) {
-        include[relation] = multiple
-          ? {
-              some: {
-                ...include[relation]?.is,
-                ...include[relation]?.some,
+        if (this.filterParam[`${relation}_${field}`] !== undefined) {
+          include[relation] = multiple
+            ? {
+                some: {
+                  ...include[relation]?.is,
+                  ...include[relation]?.some,
+                  [field]: array
+                    ? {
+                        in: this.filterParam[`${relation}_${field}`].split(","),
+                      }
+                    : this.filterParam[`${relation}_${field}`],
+                },
+              }
+            : {
+                ...include[relation],
                 [field]: array
                   ? {
-                      in: this.filterParam[`${relation}_${field}`].split(','),
+                      in: this.filterParam[`${relation}_${field}`].split(","),
                     }
                   : this.filterParam[`${relation}_${field}`],
-              },
-            }
-          : {
-              ...include[relation],
-              [field]: array
-                ? {
-                    in: this.filterParam[`${relation}_${field}`].split(','),
-                  }
-                : this.filterParam[`${relation}_${field}`],
-            };
-      }
-    });
+              };
+        }
+      },
+    );
 
     return include;
   }
@@ -226,8 +243,11 @@ export default abstract class PrismaQueryBuilder {
   buildSort() {
     const sort: any = {};
 
-    if (this.sortParam.sort && this.sortableFields.includes(this.sortParam.sort)) {
-      sort[this.sortParam.sort] = this.sortParam.sortDir || 'asc';
+    if (
+      this.sortParam.sort &&
+      this.sortableFields.includes(this.sortParam.sort)
+    ) {
+      sort[this.sortParam.sort] = this.sortParam.sortDir || "asc";
     }
 
     return sort;
@@ -237,7 +257,8 @@ export default abstract class PrismaQueryBuilder {
     const pagination: any = {};
 
     if (this.paginationParam.page) {
-      pagination.skip = (this.paginationParam.page - 1) * this.paginationParam.perPage;
+      pagination.skip =
+        (this.paginationParam.page - 1) * this.paginationParam.perPage;
     }
 
     if (this.paginationParam.perPage) {
@@ -251,8 +272,11 @@ export default abstract class PrismaQueryBuilder {
     const inFilters: any = {};
 
     this.inFields.forEach((field) => {
-      if (this.filterParam[field] && typeof this.filterParam[field] === 'string') {
-        inFilters[field] = { in: this.filterParam[field].split(',') };
+      if (
+        this.filterParam[field] &&
+        typeof this.filterParam[field] === "string"
+      ) {
+        inFilters[field] = { in: this.filterParam[field].split(",") };
       }
     });
 
@@ -270,14 +294,14 @@ export default abstract class PrismaQueryBuilder {
             where: {
               ...this.include[field.relation]?.where,
               [field.field]: {
-                notIn: this.filterParam[field.key].split(','),
+                notIn: this.filterParam[field.key].split(","),
               },
             },
           };
           return;
         }
         notInFiltersInclude[field.field] = {
-          notIn: this.filterParam[field.key].split(','),
+          notIn: this.filterParam[field.key].split(","),
         };
       }
     });
@@ -294,7 +318,7 @@ export default abstract class PrismaQueryBuilder {
           return (notInFilters[field.relation] = {});
         }
         notInFilters[field.field] = {
-          notIn: this.filterParam[field.key].split(','),
+          notIn: this.filterParam[field.key].split(","),
         };
       }
     });
@@ -319,100 +343,102 @@ export default abstract class PrismaQueryBuilder {
     const originalOr = where.OR || [];
     let newOrFields: any = [];
 
-    this.gteAndLteFields?.forEach(({ field, gte, lte, isDate, or, relation, isNumber }) => {
-      if (!this.filterParam[gte] && !this.filterParam[lte]) {
-        return;
-      }
+    this.gteAndLteFields?.forEach(
+      ({ field, gte, lte, isDate, or, relation, isNumber }) => {
+        if (!this.filterParam[gte] && !this.filterParam[lte]) {
+          return;
+        }
 
-      let newOr = [...originalOr];
-      if (this.filterParam[gte]) {
-        const newField = {
-          ...where[field],
-          gte: isDate
-            ? new Date(this.filterParam[gte])
-            : isNumber
-              ? +this.filterParam[gte]
-              : this.filterParam[gte],
-        };
+        let newOr = [...originalOr];
+        if (this.filterParam[gte]) {
+          const newField = {
+            ...where[field],
+            gte: isDate
+              ? new Date(this.filterParam[gte])
+              : isNumber
+                ? +this.filterParam[gte]
+                : this.filterParam[gte],
+          };
 
-        if (or) {
-          const newFilters = newOr.map((item, index) => {
-            if (newOr[index][field]) {
-              newOr[index][field] = {
-                ...newOr[index][field],
+          if (or) {
+            const newFilters = newOr.map((item, index) => {
+              if (newOr[index][field]) {
+                newOr[index][field] = {
+                  ...newOr[index][field],
+                  ...newField,
+                };
+                return newOr[index];
+              } else {
+                newOr[index] = { ...newOr[index], [field]: newField };
+                return newOr[index];
+              }
+            });
+
+            if (newFilters.length) {
+              newOr = newFilters;
+            } else {
+              newOr = [{ [field]: newField }];
+            }
+          } else {
+            if (relation) {
+              where[relation] = where[relation] || {};
+              where[relation][field] = {
+                ...where[relation][field],
                 ...newField,
               };
-              return newOr[index];
             } else {
-              newOr[index] = { ...newOr[index], [field]: newField };
-              return newOr[index];
+              where[field] = { ...where[field], ...newField };
             }
-          });
-
-          if (newFilters.length) {
-            newOr = newFilters;
-          } else {
-            newOr = [{ [field]: newField }];
-          }
-        } else {
-          if (relation) {
-            where[relation] = where[relation] || {};
-            where[relation][field] = {
-              ...where[relation][field],
-              ...newField,
-            };
-          } else {
-            where[field] = { ...where[field], ...newField };
           }
         }
-      }
 
-      if (this.filterParam[lte]) {
-        const newField = {
-          ...where[field],
-          lte: isDate
-            ? new Date(this.filterParam[lte])
-            : isNumber
-              ? +this.filterParam[lte]
-              : this.filterParam[lte],
-        };
+        if (this.filterParam[lte]) {
+          const newField = {
+            ...where[field],
+            lte: isDate
+              ? new Date(this.filterParam[lte])
+              : isNumber
+                ? +this.filterParam[lte]
+                : this.filterParam[lte],
+          };
 
-        if (or) {
-          const newFilters = newOr.map((item, index) => {
-            if (newOr[index][field]) {
-              newOr[index][field] = {
-                ...newOr[index][field],
+          if (or) {
+            const newFilters = newOr.map((item, index) => {
+              if (newOr[index][field]) {
+                newOr[index][field] = {
+                  ...newOr[index][field],
+                  ...newField,
+                };
+                return newOr[index];
+              } else {
+                newOr[index] = { ...newOr[index], [field]: newField };
+                return newOr[index];
+              }
+            });
+
+            if (newFilters.length) {
+              newOr = newFilters;
+            } else {
+              newOr = [{ [field]: newField }];
+            }
+          } else {
+            if (relation) {
+              where[relation] = where[relation] || {};
+              where[relation][field] = {
+                ...where[relation][field],
                 ...newField,
               };
-              return newOr[index];
             } else {
-              newOr[index] = { ...newOr[index], [field]: newField };
-              return newOr[index];
+              where[field] = { ...where[field], ...newField };
             }
-          });
-
-          if (newFilters.length) {
-            newOr = newFilters;
-          } else {
-            newOr = [{ [field]: newField }];
-          }
-        } else {
-          if (relation) {
-            where[relation] = where[relation] || {};
-            where[relation][field] = {
-              ...where[relation][field],
-              ...newField,
-            };
-          } else {
-            where[field] = { ...where[field], ...newField };
           }
         }
-      }
 
-      if (or) {
-        newOrFields = [...newOrFields, ...newOr];
-      }
-    });
+        if (or) {
+          newOrFields = [...newOrFields, ...newOr];
+        }
+      },
+    );
     if (newOrFields.length) {
       where.OR = newOrFields;
     }
@@ -432,12 +458,20 @@ export default abstract class PrismaQueryBuilder {
         if (gteMatch) {
           condition[gteMatch.field] = {
             ...(condition[gteMatch.field] || {}),
-            gte: gteMatch.isDate ? new Date(value as string) : gteMatch.isNumber ? +value : value,
+            gte: gteMatch.isDate
+              ? new Date(value as string)
+              : gteMatch.isNumber
+                ? +value
+                : value,
           };
         } else if (lteMatch) {
           condition[lteMatch.field] = {
             ...(condition[lteMatch.field] || {}),
-            lte: lteMatch.isDate ? new Date(value as string) : lteMatch.isNumber ? +value : value,
+            lte: lteMatch.isDate
+              ? new Date(value as string)
+              : lteMatch.isNumber
+                ? +value
+                : value,
           };
         } else {
           condition[key] = value;

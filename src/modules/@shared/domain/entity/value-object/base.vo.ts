@@ -1,4 +1,4 @@
-import { Notification } from '../validators/notification';
+import { Notification } from "../validators/notification";
 
 export default abstract class BaseValueObject {
   protected _notification: Notification = new Notification();

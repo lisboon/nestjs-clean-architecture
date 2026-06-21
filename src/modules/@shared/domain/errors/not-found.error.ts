@@ -6,6 +6,6 @@ export class NotFoundError extends Error {
       ? `${entity.name} not found: ${identifier}`
       : `Resource not found: ${identifier}`;
     super(message);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }

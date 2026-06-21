@@ -1,4 +1,4 @@
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = "asc" | "desc";
 
 export type SearchParamsConstructorProps<Filter = string> = {
   page?: number;
@@ -19,7 +19,7 @@ export class SearchParams<Filter = string> {
     this._page = this._validatePage(props.page);
     this._perPage = this._validatePerPage(props.perPage);
     this._sort = props.sort ?? null;
-    this._sortDir = this._sort ? (props.sortDir ?? 'asc') : null;
+    this._sortDir = this._sort ? (props.sortDir ?? "asc") : null;
     this._filter = props.filter ?? null;
   }
 
@@ -51,7 +51,8 @@ export class SearchParams<Filter = string> {
 
   private _validatePerPage(value?: number): number {
     const perPage = Number(value);
-    if (Number.isNaN(perPage) || perPage < 1 || !Number.isInteger(perPage)) return 20;
+    if (Number.isNaN(perPage) || perPage < 1 || !Number.isInteger(perPage))
+      return 20;
     return Math.min(perPage, 100);
   }
 }

@@ -1,9 +1,9 @@
-import { IsUUID } from 'class-validator';
-import BaseUseCase from '@/modules/@shared/usecase/base.usecase';
-import { User } from '../../domain/user.entity';
+import { IsUUID } from "class-validator";
+import BaseUseCase from "@/modules/@shared/usecase/base.usecase";
+import { User } from "../../domain/user.entity";
 
 export class FindUserByIdUseCaseInputDto {
-  @IsUUID(4, { message: 'Invalid user id' })
+  @IsUUID(4, { message: "Invalid user id" })
   id: string;
 }
 
@@ -13,5 +13,7 @@ export interface FindUserByIdUseCaseInterface extends BaseUseCase<
   FindUserByIdUseCaseInputDto,
   FindUserByIdUseCaseOutputDto
 > {
-  execute(data: FindUserByIdUseCaseInputDto): Promise<FindUserByIdUseCaseOutputDto>;
+  execute(
+    data: FindUserByIdUseCaseInputDto,
+  ): Promise<FindUserByIdUseCaseOutputDto>;
 }

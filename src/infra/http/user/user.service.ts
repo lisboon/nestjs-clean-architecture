@@ -1,5 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
-import UserFacade from '@/modules/user/facade/user.facade';
+import { Inject, Injectable } from "@nestjs/common";
+import UserFacade from "@/modules/user/facade/user.facade";
 import {
   LoginFacadeInputDto,
   FindUserByIdFacadeInputDto,
@@ -8,7 +8,7 @@ import {
   UpdateUserFacadeInputDto,
   ChangePasswordFacadeInputDto,
   DeleteUserFacadeInputDto,
-} from '@/modules/user/facade/user.facade.dto';
+} from "@/modules/user/facade/user.facade.dto";
 
 @Injectable()
 export class UserService {

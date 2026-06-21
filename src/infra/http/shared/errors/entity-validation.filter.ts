@@ -1,6 +1,6 @@
-import { EntityValidationError } from '@/modules/@shared/domain/errors/validation.error';
-import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { Response } from 'express';
+import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
+import { ArgumentsHost, Catch, ExceptionFilter } from "@nestjs/common";
+import { Response } from "express";
 
 @Catch(EntityValidationError)
 export class EntityValidationErrorFilter implements ExceptionFilter {
@@ -10,7 +10,7 @@ export class EntityValidationErrorFilter implements ExceptionFilter {
 
     response.status(422).json({
       statusCode: 422,
-      error: 'Unprocessable Entity',
+      error: "Unprocessable Entity",
       message: exception.error,
     });
   }

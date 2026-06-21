@@ -1,6 +1,6 @@
-import { DomainEvent } from './domain-event.interface';
-import { EventDispatcherInterface } from './event-dispatcher.interface';
-import { EventHandlerInterface } from './event-handler.interface';
+import { DomainEvent } from "./domain-event.interface";
+import { EventDispatcherInterface } from "./event-dispatcher.interface";
+import { EventHandlerInterface } from "./event-handler.interface";
 
 export class EventDispatcher implements EventDispatcherInterface {
   private handlers: Map<string, EventHandlerInterface[]> = new Map();

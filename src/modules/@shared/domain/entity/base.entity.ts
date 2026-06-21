@@ -1,6 +1,6 @@
-import { Notification } from './validators/notification';
-import { DomainEvent } from '../events/domain-event.interface';
-import { defaultIdGenerator } from '../id-generator/id-generator';
+import { Notification } from "./validators/notification";
+import { DomainEvent } from "../events/domain-event.interface";
+import { defaultIdGenerator } from "../id-generator/id-generator";
 
 export interface BaseEntityState {
   id: string;

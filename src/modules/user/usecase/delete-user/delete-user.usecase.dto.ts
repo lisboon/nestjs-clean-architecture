@@ -1,8 +1,8 @@
-import { IsUUID } from 'class-validator';
-import BaseUseCase from '@/modules/@shared/usecase/base.usecase';
+import { IsUUID } from "class-validator";
+import BaseUseCase from "@/modules/@shared/usecase/base.usecase";
 
 export class DeleteUserUseCaseInputDto {
-  @IsUUID(4, { message: 'Invalid user id' })
+  @IsUUID(4, { message: "Invalid user id" })
   id: string;
 }
 

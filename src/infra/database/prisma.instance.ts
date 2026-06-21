@@ -1,10 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const isCli =
-  process.env.npm_lifecycle_event === 'cli' || process.env.npm_lifecycle_event === 'command';
+  process.env.npm_lifecycle_event === "cli" ||
+  process.env.npm_lifecycle_event === "command";
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -12,7 +13,10 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({
   adapter,
-  log: isCli || isProduction ? ['warn', 'error'] : ['query', 'info', 'warn', 'error'],
+  log:
+    isCli || isProduction
+      ? ["warn", "error"]
+      : ["query", "info", "warn", "error"],
 });
 
 export default prisma;

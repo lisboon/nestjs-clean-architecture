@@ -1,8 +1,8 @@
-import { User } from '../domain/user.entity';
-import { UserFilter } from './user.filter';
-import { SearchParams } from '@/modules/@shared/repository/search-params';
-import { SearchResult } from '@/modules/@shared/repository/search-result';
-import { TransactionContext } from '@/modules/@shared/domain/transaction/transaction-manager.interface';
+import { User } from "../domain/user.entity";
+import { UserFilter } from "./user.filter";
+import { SearchParams } from "@/modules/@shared/repository/search-params";
+import { SearchResult } from "@/modules/@shared/repository/search-result";
+import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 
 export interface UserGateway {
   findById(id: string): Promise<User | null>;

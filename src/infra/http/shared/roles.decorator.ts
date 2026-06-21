@@ -1,5 +1,5 @@
-import { Reflector } from '@nestjs/core';
-import { UserRole } from '@/modules/@shared/domain/enums';
+import { Reflector } from "@nestjs/core";
+import { UserRole } from "@/modules/@shared/domain/enums";
 
 export interface RolePermission {
   role: UserRole;

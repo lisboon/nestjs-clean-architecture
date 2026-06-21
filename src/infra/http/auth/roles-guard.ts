@@ -1,8 +1,8 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { Roles, RolePermission } from '../shared/roles.decorator';
-import { JwtPayload } from './auth-guard';
-import { ForbiddenError } from '@/modules/@shared/domain/errors/forbidden.error';
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { Roles, RolePermission } from "../shared/roles.decorator";
+import { JwtPayload } from "./auth-guard";
+import { ForbiddenError } from "@/modules/@shared/domain/errors/forbidden.error";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   USER: 1,
@@ -11,14 +11,15 @@ const ROLE_HIERARCHY: Record<string, number> = {
   ADMIN: 4,
 };
 
-// let RoleRbac: [`${Local}.${Funcao}.${Nivel}`];
-
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermission = this.reflector.get<RolePermission>(Roles, context.getHandler());
+    const requiredPermission = this.reflector.get<RolePermission>(
+      Roles,
+      context.getHandler(),
+    );
 
     if (!requiredPermission) {
       return true;

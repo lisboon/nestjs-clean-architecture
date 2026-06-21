@@ -1,8 +1,11 @@
-import { UnprocessableEntityException } from '@nestjs/common';
-import { ValidationError as ClassValidatorError } from 'class-validator';
-import { ValidationError } from '@/modules/@shared/domain/entity/validators/notification';
+import { UnprocessableEntityException } from "@nestjs/common";
+import { ValidationError as ClassValidatorError } from "class-validator";
+import { ValidationError } from "@/modules/@shared/domain/entity/validators/notification";
 
-function flatten(err: ClassValidatorError, parentPath: string | null): ValidationError[] {
+function flatten(
+  err: ClassValidatorError,
+  parentPath: string | null,
+): ValidationError[] {
   const path = parentPath ? `${parentPath}.${err.property}` : err.property;
   const out: ValidationError[] = [];
 

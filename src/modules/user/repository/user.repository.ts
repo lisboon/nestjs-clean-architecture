@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { UserGateway } from '../gateway/user.gateway';
-import { UserFilter } from '../gateway/user.filter';
-import { User } from '../domain/user.entity';
-import UsersQueryBuilder from './users.query.builder';
-import { UserRole } from '@/modules/@shared/domain/enums';
-import { SearchParams } from '@/modules/@shared/repository/search-params';
-import { SearchResult } from '@/modules/@shared/repository/search-result';
-import { TransactionContext } from '@/modules/@shared/domain/transaction/transaction-manager.interface';
-import { normalizeEmail } from '@/modules/@shared/domain/utils/email';
+import { PrismaClient } from "@prisma/client";
+import { UserGateway } from "../gateway/user.gateway";
+import { UserFilter } from "../gateway/user.filter";
+import { User } from "../domain/user.entity";
+import UsersQueryBuilder from "./users.query.builder";
+import { UserRole } from "@/modules/@shared/domain/enums";
+import { SearchParams } from "@/modules/@shared/repository/search-params";
+import { SearchResult } from "@/modules/@shared/repository/search-result";
+import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
+import { normalizeEmail } from "@/modules/@shared/domain/utils/email";
 
 export default class UserRepository implements UserGateway {
   constructor(private readonly prisma: PrismaClient) {}

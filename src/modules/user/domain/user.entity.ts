@@ -1,8 +1,8 @@
-import BaseEntity from '@/modules/@shared/domain/entity/base.entity';
-import { EntityValidationError } from '@/modules/@shared/domain/errors/validation.error';
-import { normalizeEmail } from '@/modules/@shared/domain/utils/email';
-import { UserRole } from '@/modules/@shared/domain/enums';
-import UserValidatorFactory from './validators/user.validator';
+import BaseEntity from "@/modules/@shared/domain/entity/base.entity";
+import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
+import { normalizeEmail } from "@/modules/@shared/domain/utils/email";
+import { UserRole } from "@/modules/@shared/domain/enums";
+import UserValidatorFactory from "./validators/user.validator";
 
 export interface UserProps {
   id?: string;
@@ -27,7 +27,13 @@ export class User extends BaseEntity {
   private _tokenValidAfter?: Date;
 
   constructor(props: UserProps) {
-    super(props.id, props.createdAt, props.updatedAt, props.active, props.deletedAt);
+    super(
+      props.id,
+      props.createdAt,
+      props.updatedAt,
+      props.active,
+      props.deletedAt,
+    );
     this._name = props.name;
     this._email = normalizeEmail(props.email);
     this._password = props.password;
@@ -88,13 +94,15 @@ export class User extends BaseEntity {
     this.update();
   }
 
-  updateUser(props: Partial<Pick<UserProps, 'name' | 'email' | 'avatarUrl'>>): void {
+  updateUser(
+    props: Partial<Pick<UserProps, "name" | "email" | "avatarUrl">>,
+  ): void {
     if (props.name !== undefined) this.changeName(props.name);
     if (props.email !== undefined) this.changeEmail(props.email);
     if (props.avatarUrl !== undefined) this._avatarUrl = props.avatarUrl;
 
     this.update();
-    this.validate(['update']);
+    this.validate(["update"]);
 
     if (this.notification.hasErrors()) {
       throw new EntityValidationError(this.notification.toJSON());
@@ -103,7 +111,7 @@ export class User extends BaseEntity {
 
   validate(fields?: string[]): void {
     const validator = UserValidatorFactory.create();
-    validator.validate(this._notification, this, fields ?? ['create']);
+    validator.validate(this._notification, this, fields ?? ["create"]);
   }
 
   static create(props: UserProps): User {

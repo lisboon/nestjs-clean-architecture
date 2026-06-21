@@ -1,4 +1,4 @@
-import { UserRole } from '@/modules/@shared/domain/enums';
+import { UserRole } from "@/modules/@shared/domain/enums";
 
 export interface UserFilter {
   name?: string;

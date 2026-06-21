@@ -1,12 +1,12 @@
-import { UserGateway } from '../../gateway/user.gateway';
-import { User } from '../../domain/user.entity';
-import { PasswordHashService } from '@/modules/@shared/domain/services/password-hash.service';
-import { EntityValidationError } from '@/modules/@shared/domain/errors/validation.error';
+import { UserGateway } from "../../gateway/user.gateway";
+import { User } from "../../domain/user.entity";
+import { PasswordHashService } from "@/modules/@shared/domain/services/password-hash.service";
+import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
 import {
   CreateUserUseCaseInputDto,
   CreateUserUseCaseInterface,
   CreateUserUseCaseOutputDto,
-} from './create-user.usecase.dto';
+} from "./create-user.usecase.dto";
 
 export default class CreateUserUseCase implements CreateUserUseCaseInterface {
   constructor(
@@ -14,10 +14,14 @@ export default class CreateUserUseCase implements CreateUserUseCaseInterface {
     private readonly passwordHashService: PasswordHashService,
   ) {}
 
-  async execute(data: CreateUserUseCaseInputDto): Promise<CreateUserUseCaseOutputDto> {
+  async execute(
+    data: CreateUserUseCaseInputDto,
+  ): Promise<CreateUserUseCaseOutputDto> {
     const existingUser = await this.userGateway.findByEmail(data.email);
     if (existingUser) {
-      throw new EntityValidationError([{ field: 'email', message: 'Email already in use' }]);
+      throw new EntityValidationError([
+        { field: "email", message: "Email already in use" },
+      ]);
     }
 
     const hashedPassword = await this.passwordHashService.hash(data.password);

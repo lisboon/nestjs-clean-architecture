@@ -1,6 +1,11 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
-import { TokenExpiredError } from 'jsonwebtoken';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpStatus,
+} from "@nestjs/common";
+import { Response } from "express";
+import { TokenExpiredError } from "jsonwebtoken";
 
 @Catch(TokenExpiredError)
 export class TokenExpiredErrorFilter implements ExceptionFilter {
@@ -9,8 +14,8 @@ export class TokenExpiredErrorFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     response.status(HttpStatus.UNAUTHORIZED).json({
       statusCode: HttpStatus.UNAUTHORIZED,
-      error: 'Unauthorized',
-      message: 'Authentication token has expired.',
+      error: "Unauthorized",
+      message: "Authentication token has expired.",
     });
   }
 }

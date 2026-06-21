@@ -1,6 +1,7 @@
-import { ValidationError } from '../entity/validators/notification';
+import { ValidationError } from "../entity/validators/notification";
 
-const DEFAULT_MESSAGE = 'The request could not be processed with the provided parameters';
+const DEFAULT_MESSAGE =
+  "The request could not be processed with the provided parameters";
 
 export abstract class BaseValidationError extends Error {
   public status = 422;
@@ -10,7 +11,7 @@ export abstract class BaseValidationError extends Error {
     message = DEFAULT_MESSAGE,
   ) {
     super(message);
-    this.name = 'BaseValidationError';
+    this.name = "BaseValidationError";
   }
 
   count(): number {
@@ -21,20 +22,20 @@ export abstract class BaseValidationError extends Error {
 export class EntityValidationError extends BaseValidationError {
   constructor(error: ValidationError[]) {
     super(error);
-    this.name = 'EntityValidationError';
+    this.name = "EntityValidationError";
   }
 }
 
 export class SearchValidationError extends BaseValidationError {
   constructor(error: ValidationError[]) {
     super(error);
-    this.name = 'SearchValidationError';
+    this.name = "SearchValidationError";
   }
 }
 
 export class LoadEntityError extends BaseValidationError {
   constructor(error: ValidationError[]) {
     super(error);
-    this.name = 'LoadEntityError';
+    this.name = "LoadEntityError";
   }
 }

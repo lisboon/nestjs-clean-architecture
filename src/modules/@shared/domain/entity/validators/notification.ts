@@ -34,7 +34,9 @@ export class Notification {
 
   toJSON(): ValidationError[] {
     const result: ValidationError[] = [];
-    this.globalErrors.forEach((message) => result.push({ field: null, message }));
+    this.globalErrors.forEach((message) =>
+      result.push({ field: null, message }),
+    );
     this.fieldErrors.forEach((messages, field) => {
       messages.forEach((message) => result.push({ field, message }));
     });
