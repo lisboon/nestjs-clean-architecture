@@ -68,7 +68,10 @@ jobs:
           --health-retries 5
 
     env:
+      NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/backend_test
+      JWT_SECRET: test-jwt-secret-not-for-production-0123456789
+      JWT_EXPIRES_IN: 1h
 
     steps:
       - name: Checkout
