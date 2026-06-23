@@ -1,8 +1,8 @@
 {
-  "name": "app-backend",
+  "name": "nestjs-clean-architecture",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Lisboon",
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@11.1.1",
