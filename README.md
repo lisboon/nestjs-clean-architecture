@@ -22,7 +22,7 @@
 
 NestJS backend built with DDD and Clean Architecture. The domain layer doesn't depend on Nest, Prisma or HTTP: the business rules are plain TypeScript classes and the framework stays at the boundary. Controllers, guards, the Prisma adapter and the JWT/bcrypt implementations are all infrastructure plugged into interfaces (ports).
 
-For now the code implements the User and Auth domains. They work as a reference for how the other modules should be built. The infrastructure (CI, Docker, migrations, validation, linting, commit hooks) is already set up, so adding a new domain doesn't mean redoing the foundation.
+The code implements the User, Auth and Company domains. They work as a reference for how the other modules should be built. The infrastructure (CI, Docker, migrations, validation, linting, commit hooks) is already set up, so adding a new domain doesn't mean redoing the foundation.
 
 ## Architecture
 
@@ -160,7 +160,7 @@ pnpm test:e2e
 pnpm test:cov
 ```
 
-Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth and user routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, and role enforcement.
+Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth, user and company routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, role enforcement, and blocking deletion of a company that still has active users.
 
 ## API documentation
 
