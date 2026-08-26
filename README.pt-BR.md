@@ -59,7 +59,7 @@ src/
 
 Algumas decisões por trás da estrutura:
 
-- A camada de domínio nunca importa Nest ou Prisma. O template de PR cobra isso, então não fica só na boa intenção. Isso mantém a lógica de negócio fácil de testar isolada e o framework substituível.
+- A camada de domínio nunca importa Nest ou Prisma. O ESLint bloqueia (`no-restricted-imports` aplicado a todo arquivo em `src/modules/**/domain/**`) e o CI roda a checagem como um gate próprio a cada push e pull request, então não fica só na boa intenção. Isso mantém a lógica de negócio fácil de testar isolada e o framework substituível.
 - A validação passa por um objeto `Notification` em vez de lançar erro no primeiro problema, então a entidade reporta todos os campos inválidos de uma vez.
 - Cada caso de uso é uma classe única atrás de uma interface, composta por um facade e montada numa factory, o que mantém os controllers enxutos.
 - A autenticação é rígida de propósito. A validação de sessão lê o role do banco em vez de confiar no token, trocar a senha invalida os tokens emitidos antes da troca (`tokenValidAfter`), e a rota de login tem um rate limit mais apertado que o resto.

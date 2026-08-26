@@ -41,6 +41,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Domain purity check
+        run: pnpm exec eslint "src/modules/**/domain/**/*.ts"
+
       - name: Typecheck
         run: pnpm typecheck
 
