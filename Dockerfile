@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
@@ -25,7 +25,7 @@ RUN pnpm prisma:generate \
   && pnpm build \
   && pnpm prune --prod --ignore-scripts
 
-FROM node:24-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 
 ENV NODE_ENV=production \
     PORT=3001
