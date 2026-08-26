@@ -50,4 +50,31 @@ export default tseslint.config(
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
+  {
+    files: ['src/modules/**/domain/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@nestjs/*',
+                '@prisma/client',
+                // relative escapes into infrastructure layers
+                '**/infra/**',
+                '**/adapters/**',
+                '**/gateway/**',
+                '**/repository/**',
+                '**/facade/**',
+                '**/factory/**',
+              ],
+              message:
+                'The domain layer must stay framework-free. Business rules are plain TypeScript; Nest and Prisma plug in through ports/adapters.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
