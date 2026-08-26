@@ -59,7 +59,7 @@ src/
 
 Some decisions behind the structure:
 
-- The domain layer never imports Nest or Prisma. The PR template checks for it, so it isn't left to good intentions. That keeps the business logic easy to test on its own and the framework replaceable.
+-   The domain layer never imports Nest or Prisma. ESLint blocks it (`no-restricted-imports` applied to every file under `src/modules/**/domain/**`) and CI runs the check as its own gate on every push and pull request, so it isn't left to good intentions. That keeps the business logic easy to test on its own and the framework replaceable.
 - Validation runs through a `Notification` object instead of throwing on the first error, so an entity can report every invalid field at once.
 - Each use case is a single class behind an interface, composed by a facade and wired in a factory, which keeps the controllers thin.
 - Auth is strict on purpose. Session validation reads the role from the database instead of trusting the token, changing a password invalidates tokens issued before the change (`tokenValidAfter`), and the login route has a tighter rate limit than the rest.
