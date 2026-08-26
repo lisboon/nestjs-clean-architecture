@@ -9,21 +9,17 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
-    "strictPropertyInitialization": false,
     "types": ["jest", "node"],
-    "paths": {
-      "@/*": ["./src/*"],
-      "@prisma/client": ["./generated/prisma/client"]
-    }
+    "paths": {}
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval"
