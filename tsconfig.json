@@ -13,11 +13,14 @@
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./src/*"],
       "@prisma/client": ["./generated/prisma/client"]
