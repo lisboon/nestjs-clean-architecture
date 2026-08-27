@@ -174,6 +174,7 @@ http://localhost:3001/api-docs
 
 ```bash
 pnpm lint        # ESLint + Prettier
+pnpm lint:fix    # apply safe automatic fixes locally
 pnpm typecheck   # tsc --noEmit
 ```
 
