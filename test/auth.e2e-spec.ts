@@ -19,6 +19,7 @@ const COMPANY_SLUG = "e2e-auth-company";
 describe("Auth (e2e)", () => {
   let app: INestApplication<App>;
   let companyId: string;
+  let accessToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -63,6 +64,7 @@ describe("Auth (e2e)", () => {
       .expect(201);
 
     expect(res.body.accessToken).toEqual(expect.any(String));
+    accessToken = res.body.accessToken;
     expect(res.body.user).toMatchObject({
       email: ADMIN.email,
       role: UserRole.ADMIN,
@@ -84,17 +86,42 @@ describe("Auth (e2e)", () => {
   });
 
   it("returns the current user on GET /auth/me with a valid token", async () => {
-    const login = await request(app.getHttpServer())
-      .post("/auth/login")
-      .send({ email: ADMIN.email, password: ADMIN.password });
-
     const res = await request(app.getHttpServer())
       .get("/auth/me")
-      .set("Authorization", `Bearer ${login.body.accessToken}`)
+      .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
 
     expect(res.body.email).toBe(ADMIN.email);
     expect(res.body.password).toBeUndefined();
+  });
+
+  it("blocks login and existing sessions while the company is inactive", async () => {
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { active: false },
+    });
+
+    try {
+      await request(app.getHttpServer())
+        .post("/auth/login")
+        .send({ email: ADMIN.email, password: ADMIN.password })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .get("/auth/me")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(401);
+    } finally {
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: true },
+      });
+    }
+
+    await request(app.getHttpServer())
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
   });
 
   it("rejects GET /auth/me without a token (401)", async () => {

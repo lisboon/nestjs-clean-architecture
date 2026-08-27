@@ -2,6 +2,7 @@ import ValidateSessionUseCase from "../../../usecase/validate-session/validate-s
 import { User } from "../../../domain/user.entity";
 import { UnauthorizedError } from "@/modules/@shared/domain/errors/unauthorized.error";
 import { UserRole } from "@/modules/@shared/domain/enums";
+import { Company } from "@/modules/company/domain/company.entity";
 
 const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}) =>
   User.create({
@@ -13,12 +14,28 @@ const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}) =>
     ...overrides,
   });
 
-const makeSut = ({ user = makeUser() as User | null } = {}) => {
+const makeCompany = () =>
+  Company.create({
+    id: "c0000000-0000-4000-8000-000000000000",
+    name: "Acme",
+    slug: "acme",
+  });
+
+const makeSut = ({
+  user = makeUser() as User | null,
+  company = makeCompany() as Company | null,
+} = {}) => {
   const userGateway = {
     findById: jest.fn().mockResolvedValue(user),
   };
-  const useCase = new ValidateSessionUseCase(userGateway as any);
-  return { useCase, userGateway };
+  const companyGateway = {
+    findById: jest.fn().mockResolvedValue(company),
+  };
+  const useCase = new ValidateSessionUseCase(
+    userGateway as any,
+    companyGateway as any,
+  );
+  return { useCase, userGateway, companyGateway };
 };
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
@@ -60,6 +77,26 @@ describe("ValidateSessionUseCase", () => {
     const user = makeUser();
     user.deactivate();
     const { useCase } = makeSut({ user });
+
+    await expect(
+      useCase.execute({ userId: user.id, issuedAt: nowSeconds() }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  it("throws UnauthorizedError when the company does not exist", async () => {
+    const user = makeUser();
+    const { useCase } = makeSut({ user, company: null });
+
+    await expect(
+      useCase.execute({ userId: user.id, issuedAt: nowSeconds() }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  it("throws UnauthorizedError when the company is deactivated", async () => {
+    const user = makeUser();
+    const company = makeCompany();
+    company.deactivate();
+    const { useCase } = makeSut({ user, company });
 
     await expect(
       useCase.execute({ userId: user.id, issuedAt: nowSeconds() }),
