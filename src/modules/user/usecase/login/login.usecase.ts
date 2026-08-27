@@ -23,11 +23,6 @@ export default class LoginUseCase implements LoginUseCaseInterface {
       throw new BadLoginError();
     }
 
-    const company = await this.companyGateway.findById(user.companyId);
-    if (!company || !company.active) {
-      throw new BadLoginError();
-    }
-
     const isPasswordValid = await this.passwordHashService.compare(
       data.password,
       user.password,
