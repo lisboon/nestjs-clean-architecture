@@ -46,7 +46,7 @@ describe("FindAllCompaniesUseCase", () => {
       sortDir: "desc",
       name: "acme",
       slug: "acme-corp",
-      active: "true",
+      active: true,
     });
 
     const params = companyGateway.search.mock.calls[0][0] as SearchParams;
@@ -58,7 +58,7 @@ describe("FindAllCompaniesUseCase", () => {
     expect(params.filter).toEqual({
       name: "acme",
       slug: "acme-corp",
-      active: "true",
+      active: true,
     });
   });
 });

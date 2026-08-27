@@ -10,7 +10,7 @@ export interface FindAllUsersUseCaseInputDto {
   name?: string;
   email?: string;
   role?: UserRole;
-  active?: string;
+  active?: boolean;
 }
 
 export interface FindAllUsersUseCaseOutputDto {

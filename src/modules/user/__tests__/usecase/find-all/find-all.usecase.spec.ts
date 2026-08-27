@@ -60,7 +60,7 @@ describe("FindAllUsersUseCase", () => {
       sortDir: "desc",
       name: "maria",
       role: UserRole.ADMIN,
-      active: "true",
+      active: true,
     });
 
     const params = userGateway.search.mock.calls[0][0] as SearchParams;
@@ -72,7 +72,7 @@ describe("FindAllUsersUseCase", () => {
     expect(params.filter).toEqual({
       name: "maria",
       role: UserRole.ADMIN,
-      active: "true",
+      active: true,
     });
   });
 });

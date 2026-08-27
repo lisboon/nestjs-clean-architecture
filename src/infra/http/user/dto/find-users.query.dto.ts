@@ -1,12 +1,13 @@
 import {
   IsEnum,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
   IsString,
   Min,
 } from "class-validator";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { UserRole } from "@/modules/@shared/domain/enums";
 import { SortDirection } from "@/modules/@shared/repository/search-params";
 
@@ -44,6 +45,11 @@ export class FindUsersQueryDto {
   role?: UserRole;
 
   @IsOptional()
-  @IsIn(["true", "false"], { message: "Active must be true or false" })
-  active?: string;
+  @Transform(({ value }) => {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return value;
+  })
+  @IsBoolean({ message: "Active must be true or false" })
+  active?: boolean;
 }
