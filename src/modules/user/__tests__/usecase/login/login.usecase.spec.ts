@@ -2,6 +2,7 @@ import LoginUseCase from "../../../usecase/login/login.usecase";
 import { User } from "../../../domain/user.entity";
 import { BadLoginError } from "@/modules/@shared/domain/errors/bad-login.error";
 import { UserRole } from "@/modules/@shared/domain/enums";
+import { Company } from "@/modules/company/domain/company.entity";
 
 const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}) =>
   User.create({
@@ -13,9 +14,23 @@ const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}) =>
     ...overrides,
   });
 
-const makeSut = ({ user = makeUser(), passwordMatches = true } = {}) => {
+const makeCompany = () =>
+  Company.create({
+    id: "c0000000-0000-4000-8000-000000000000",
+    name: "Acme",
+    slug: "acme",
+  });
+
+const makeSut = ({
+  user = makeUser(),
+  company = makeCompany() as Company | null,
+  passwordMatches = true,
+} = {}) => {
   const userGateway = {
     findByEmail: jest.fn().mockResolvedValue(user),
+  };
+  const companyGateway = {
+    findById: jest.fn().mockResolvedValue(company),
   };
   const passwordHashService = {
     compare: jest.fn().mockResolvedValue(passwordMatches),
@@ -26,11 +41,19 @@ const makeSut = ({ user = makeUser(), passwordMatches = true } = {}) => {
 
   const useCase = new LoginUseCase(
     userGateway as any,
+    companyGateway as any,
     passwordHashService as any,
     jwtTokenService as any,
   );
 
-  return { useCase, user, userGateway, passwordHashService, jwtTokenService };
+  return {
+    useCase,
+    user,
+    userGateway,
+    companyGateway,
+    passwordHashService,
+    jwtTokenService,
+  };
 };
 
 describe("LoginUseCase", () => {
@@ -71,6 +94,24 @@ describe("LoginUseCase", () => {
 
     await expect(
       useCase.execute({ email: user.email, password: "secret123" }),
+    ).rejects.toBeInstanceOf(BadLoginError);
+  });
+
+  it("throws BadLoginError when the company does not exist", async () => {
+    const { useCase } = makeSut({ company: null });
+
+    await expect(
+      useCase.execute({ email: "maria@backend.com.br", password: "secret123" }),
+    ).rejects.toBeInstanceOf(BadLoginError);
+  });
+
+  it("throws BadLoginError when the company is deactivated", async () => {
+    const company = makeCompany();
+    company.deactivate();
+    const { useCase } = makeSut({ company });
+
+    await expect(
+      useCase.execute({ email: "maria@backend.com.br", password: "secret123" }),
     ).rejects.toBeInstanceOf(BadLoginError);
   });
 

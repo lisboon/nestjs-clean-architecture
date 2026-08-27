@@ -23,8 +23,13 @@ export default class UserFacadeFactory {
     const jwtTokenService = new JwtTokenServiceImpl();
 
     return new UserFacade(
-      new LoginUseCase(userRepository, passwordHashService, jwtTokenService),
-      new ValidateSessionUseCase(userRepository),
+      new LoginUseCase(
+        userRepository,
+        companyRepository,
+        passwordHashService,
+        jwtTokenService,
+      ),
+      new ValidateSessionUseCase(userRepository, companyRepository),
       new FindUserByIdUseCase(userRepository),
       new FindAllUsersUseCase(userRepository),
       new CreateUserUseCase(

@@ -97,6 +97,40 @@ describe("Auth (e2e)", () => {
     expect(res.body.password).toBeUndefined();
   });
 
+  it("blocks login and existing sessions while the company is inactive", async () => {
+    const login = await request(app.getHttpServer())
+      .post("/auth/login")
+      .send({ email: ADMIN.email, password: ADMIN.password })
+      .expect(201);
+
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { active: false },
+    });
+
+    try {
+      await request(app.getHttpServer())
+        .post("/auth/login")
+        .send({ email: ADMIN.email, password: ADMIN.password })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .get("/auth/me")
+        .set("Authorization", `Bearer ${login.body.accessToken}`)
+        .expect(401);
+    } finally {
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: true },
+      });
+    }
+
+    await request(app.getHttpServer())
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${login.body.accessToken}`)
+      .expect(200);
+  });
+
   it("rejects GET /auth/me without a token (401)", async () => {
     await request(app.getHttpServer()).get("/auth/me").expect(401);
   });

@@ -1,4 +1,5 @@
 import { UserGateway } from "../../gateway/user.gateway";
+import { CompanyGateway } from "@/modules/company/gateway/company.gateway";
 import { PasswordHashService } from "@/modules/@shared/domain/services/password-hash.service";
 import { JwtTokenService } from "@/modules/@shared/domain/services/jwt-token.service";
 import { BadLoginError } from "@/modules/@shared/domain/errors/bad-login.error";
@@ -11,6 +12,7 @@ import {
 export default class LoginUseCase implements LoginUseCaseInterface {
   constructor(
     private readonly userGateway: UserGateway,
+    private readonly companyGateway: CompanyGateway,
     private readonly passwordHashService: PasswordHashService,
     private readonly jwtTokenService: JwtTokenService,
   ) {}
@@ -18,6 +20,11 @@ export default class LoginUseCase implements LoginUseCaseInterface {
   async execute(data: LoginUseCaseInputDto): Promise<LoginUseCaseOutputDto> {
     const user = await this.userGateway.findByEmail(data.email);
     if (!user || !user.active) {
+      throw new BadLoginError();
+    }
+
+    const company = await this.companyGateway.findById(user.companyId);
+    if (!company || !company.active) {
       throw new BadLoginError();
     }
 

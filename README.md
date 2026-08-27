@@ -65,7 +65,7 @@ Some decisions behind the structure:
 - Use cases receive plain TypeScript inputs and depend only on domain types and ports. HTTP DTOs own `class-validator`/`class-transformer` decorators, so a queue, CLI or another adapter can call the same application API without inheriting HTTP concerns. ESLint enforces this boundary under `src/modules/**/usecase/**`.
 - Validation runs through a `Notification` object instead of throwing on the first error, so an entity can report every invalid field at once.
 - Each use case is a single class behind an interface, composed by a facade and wired in a factory, which keeps the controllers thin.
-- Auth is strict on purpose. Session validation reads the role from the database instead of trusting the token, changing a password invalidates tokens issued before the change (`tokenValidAfter`), and the login route has a tighter rate limit than the rest.
+- Auth is strict on purpose. Session validation reads the role and company status from the database instead of trusting the token, inactive companies block login and existing sessions, changing a password invalidates tokens issued before the change (`tokenValidAfter`), and the login route has a tighter rate limit than the rest.
 
 A couple of honest trade-offs worth naming:
 
