@@ -77,6 +77,16 @@ describe("ValidateSessionUseCase", () => {
     ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
+  it("rejects tokens without iat after sessions have been invalidated", async () => {
+    const user = makeUser();
+    user.invalidateTokens();
+    const { useCase } = makeSut({ user });
+
+    await expect(useCase.execute({ userId: user.id })).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
+  });
+
   it("accepts tokens issued after tokenValidAfter", async () => {
     const user = makeUser();
     user.invalidateTokens();

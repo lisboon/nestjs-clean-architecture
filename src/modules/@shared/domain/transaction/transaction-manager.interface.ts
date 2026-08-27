@@ -1,10 +1,7 @@
 export type TransactionContext = unknown;
 
 export type TransactionIsolationLevel =
-  | "ReadUncommitted"
-  | "ReadCommitted"
-  | "RepeatableRead"
-  | "Serializable";
+  "ReadUncommitted" | "ReadCommitted" | "RepeatableRead" | "Serializable";
 
 export interface TransactionOptions {
   isolationLevel?: TransactionIsolationLevel;

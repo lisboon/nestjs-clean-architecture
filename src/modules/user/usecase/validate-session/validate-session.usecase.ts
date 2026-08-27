@@ -18,6 +18,10 @@ export default class ValidateSessionUseCase implements ValidateSessionUseCaseInt
       throw new UnauthorizedError("Invalid or expired token");
     }
 
+    if (user.tokenValidAfter && data.issuedAt === undefined) {
+      throw new UnauthorizedError("Invalid or expired token");
+    }
+
     if (user.tokenValidAfter && data.issuedAt !== undefined) {
       const issuedAtMs = data.issuedAt * 1000;
       if (issuedAtMs < user.tokenValidAfter.getTime()) {
