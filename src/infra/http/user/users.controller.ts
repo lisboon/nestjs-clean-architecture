@@ -16,10 +16,11 @@ import { RolesGuard } from "../auth/roles-guard";
 import { Roles } from "../shared/roles.decorator";
 import { UserRole } from "@/modules/@shared/domain/enums";
 import { UserService } from "./user.service";
-import { CreateUserUseCaseInputDto } from "@/modules/user/usecase/create-user/create-user.usecase.dto";
-import { FindAllUsersUseCaseInputDto } from "@/modules/user/usecase/find-all/find-all.usecase.dto";
 import { UpdateUserBodyDto } from "./dto/update-user.body.dto";
 import { ChangePasswordBodyDto } from "./dto/change-password.body.dto";
+import { CreateUserBodyDto } from "./dto/create-user.body.dto";
+import { FindUsersQueryDto } from "./dto/find-users.query.dto";
+import { UuidParamDto } from "../shared/dto/uuid-param.dto";
 
 @ApiTags("Users")
 @ApiBearerAuth()
@@ -31,14 +32,14 @@ export class UsersController {
   @Post()
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Create user (admin only)" })
-  async create(@Body() body: CreateUserUseCaseInputDto) {
+  async create(@Body() body: CreateUserBodyDto) {
     return this.userService.create(body);
   }
 
   @Get()
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "List users with pagination and filters" })
-  async findAll(@Query() query: FindAllUsersUseCaseInputDto) {
+  async findAll(@Query() query: FindUsersQueryDto) {
     return this.userService.findAll(query);
   }
 
@@ -59,21 +60,21 @@ export class UsersController {
   @Get(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Find user by id (admin only)" })
-  async findById(@Param("id") id: string) {
-    return this.userService.findById({ id });
+  async findById(@Param() params: UuidParamDto) {
+    return this.userService.findById({ id: params.id });
   }
 
   @Patch(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Update user (admin only)" })
-  async update(@Param("id") id: string, @Body() body: UpdateUserBodyDto) {
-    return this.userService.update({ id, ...body });
+  async update(@Param() params: UuidParamDto, @Body() body: UpdateUserBodyDto) {
+    return this.userService.update({ id: params.id, ...body });
   }
 
   @Delete(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Soft delete user (admin only)" })
-  async delete(@Param("id") id: string) {
-    return this.userService.delete({ id });
+  async delete(@Param() params: UuidParamDto) {
+    return this.userService.delete({ id: params.id });
   }
 }

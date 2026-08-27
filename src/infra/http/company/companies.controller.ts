@@ -17,7 +17,8 @@ import { UserRole } from "@/modules/@shared/domain/enums";
 import { CompanyService } from "./company.service";
 import { CreateCompanyBodyDto } from "./dto/create-company.body.dto";
 import { UpdateCompanyBodyDto } from "./dto/update-company.body.dto";
-import { FindAllCompaniesUseCaseInputDto } from "@/modules/company/usecase/find-all/find-all.usecase.dto";
+import { FindCompaniesQueryDto } from "./dto/find-companies.query.dto";
+import { UuidParamDto } from "../shared/dto/uuid-param.dto";
 
 @ApiTags("Companies")
 @ApiBearerAuth()
@@ -36,28 +37,31 @@ export class CompaniesController {
   @Get()
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "List companies with pagination and filters" })
-  async findAll(@Query() query: FindAllCompaniesUseCaseInputDto) {
+  async findAll(@Query() query: FindCompaniesQueryDto) {
     return this.companyService.findAll(query);
   }
 
   @Get(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Find company by id (admin only)" })
-  async findById(@Param("id") id: string) {
-    return this.companyService.findById({ id });
+  async findById(@Param() params: UuidParamDto) {
+    return this.companyService.findById({ id: params.id });
   }
 
   @Patch(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Update company (admin only)" })
-  async update(@Param("id") id: string, @Body() body: UpdateCompanyBodyDto) {
-    return this.companyService.update({ id, ...body });
+  async update(
+    @Param() params: UuidParamDto,
+    @Body() body: UpdateCompanyBodyDto,
+  ) {
+    return this.companyService.update({ id: params.id, ...body });
   }
 
   @Delete(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Soft delete company (admin only)" })
-  async delete(@Param("id") id: string) {
-    return this.companyService.delete({ id });
+  async delete(@Param() params: UuidParamDto) {
+    return this.companyService.delete({ id: params.id });
   }
 }

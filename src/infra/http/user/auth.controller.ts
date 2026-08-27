@@ -13,7 +13,7 @@ import { RolesGuard } from "../auth/roles-guard";
 import { Roles } from "../shared/roles.decorator";
 import { UserRole } from "@/modules/@shared/domain/enums";
 import { UserService } from "./user.service";
-import { LoginUseCaseInputDto } from "@/modules/user/usecase/login/login.usecase.dto";
+import { LoginBodyDto } from "./dto/login.body.dto";
 
 const AUTH_THROTTLE = { default: { limit: 5, ttl: 60_000 } } as const;
 
@@ -25,7 +25,7 @@ export class AuthController {
   @Post("login")
   @Throttle(AUTH_THROTTLE)
   @ApiOperation({ summary: "Login with email and password" })
-  async login(@Body() body: LoginUseCaseInputDto) {
+  async login(@Body() body: LoginBodyDto) {
     return this.userService.login(body);
   }
 

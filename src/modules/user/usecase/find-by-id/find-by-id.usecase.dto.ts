@@ -1,9 +1,7 @@
-import { IsUUID } from "class-validator";
 import BaseUseCase from "@/modules/@shared/usecase/base.usecase";
 import { User } from "../../domain/user.entity";
 
-export class FindUserByIdUseCaseInputDto {
-  @IsUUID(4, { message: "Invalid user id" })
+export interface FindUserByIdUseCaseInputDto {
   id: string;
 }
 

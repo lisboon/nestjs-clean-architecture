@@ -26,11 +26,13 @@ The code implements the User, Auth and Company domains. They work as a reference
 
 ## Architecture
 
-The code is split into a framework-agnostic core and an infrastructure shell.
+The code is organized as vertical modules. Each module keeps its framework-agnostic domain and
+use cases beside its ports, adapters and composition code, while `infra/http` hosts the NestJS
+transport layer.
 
 ```
 src/
-├── modules/                # application core (no framework imports)
+├── modules/                # vertical modules: core, ports, adapters & composition
 │   ├── @shared/            # base entity & value objects, domain errors,
 │   │                       # events, validation (Notification), repository
 │   │                       # abstractions, transaction manager interface
@@ -52,7 +54,7 @@ src/
 │       ├── facade/         # module entry point
 │       └── factory/        # dependency wiring
 └── infra/                  # the framework lives here
-    ├── http/               # Nest bootstrap, controllers, guards, filters
+    ├── http/               # Nest bootstrap, transport DTOs, controllers, guards, filters
     ├── database/           # Prisma client + transaction manager
     └── services/           # bcrypt and JWT implementations
 ```
@@ -60,6 +62,7 @@ src/
 Some decisions behind the structure:
 
 -   The domain layer never imports Nest or Prisma. ESLint blocks it (`no-restricted-imports` applied to every file under `src/modules/**/domain/**`) and CI runs the check as its own gate on every push and pull request, so it isn't left to good intentions. That keeps the business logic easy to test on its own and the framework replaceable.
+- Use cases receive plain TypeScript inputs and depend only on domain types and ports. HTTP DTOs own `class-validator`/`class-transformer` decorators, so a queue, CLI or another adapter can call the same application API without inheriting HTTP concerns. ESLint enforces this boundary under `src/modules/**/usecase/**`.
 - Validation runs through a `Notification` object instead of throwing on the first error, so an entity can report every invalid field at once.
 - Each use case is a single class behind an interface, composed by a facade and wired in a factory, which keeps the controllers thin.
 - Auth is strict on purpose. Session validation reads the role from the database instead of trusting the token, changing a password invalidates tokens issued before the change (`tokenValidAfter`), and the login route has a tighter rate limit than the rest.

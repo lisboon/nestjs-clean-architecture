@@ -77,4 +77,29 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['src/modules/**/usecase/**/*.ts'],
+    ignores: ['src/modules/**/__tests__/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@nestjs/*',
+                '@prisma/client',
+                'class-validator',
+                'class-transformer',
+                '**/infra/**',
+                '**/factory/**',
+              ],
+              message:
+                'Use cases depend on domain types and ports. Transport validation, frameworks, persistence, and composition stay at the module edges.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

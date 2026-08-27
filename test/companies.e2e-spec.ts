@@ -81,6 +81,13 @@ describe("Companies (e2e)", () => {
       .expect(401);
   });
 
+  it("rejects an invalid company id at the HTTP boundary (422)", async () => {
+    await request(app.getHttpServer())
+      .get("/companies/not-a-uuid")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(422);
+  });
+
   it("allows an admin to create a company (201)", async () => {
     const res = await request(app.getHttpServer())
       .post("/companies")
