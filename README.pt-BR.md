@@ -65,7 +65,7 @@ Algumas decisões por trás da estrutura:
 - Os casos de uso recebem inputs TypeScript simples e dependem apenas de tipos de domínio e portas. Os DTOs HTTP concentram os decorators de `class-validator`/`class-transformer`, permitindo que fila, CLI ou outro adaptador use a mesma API de aplicação sem herdar detalhes HTTP. O ESLint reforça essa fronteira em `src/modules/**/usecase/**`.
 - A validação passa por um objeto `Notification` em vez de lançar erro no primeiro problema, então a entidade reporta todos os campos inválidos de uma vez.
 - Cada caso de uso é uma classe única atrás de uma interface, composta por um facade e montada numa factory, o que mantém os controllers enxutos.
-- A autenticação é rígida de propósito. A validação de sessão lê o role do banco em vez de confiar no token, trocar a senha invalida os tokens emitidos antes da troca (`tokenValidAfter`), e a rota de login tem um rate limit mais apertado que o resto.
+- A autenticação é rígida de propósito. A validação de sessão lê o role e o status da empresa no banco em vez de confiar no token, empresas inativas bloqueiam login e sessões existentes, trocar a senha invalida os tokens emitidos antes da troca (`tokenValidAfter`), e a rota de login tem um rate limit mais apertado que o resto.
 
 Dois trade-offs que vale a pena assumir com sinceridade:
 
