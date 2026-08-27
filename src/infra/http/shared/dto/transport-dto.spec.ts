@@ -17,10 +17,25 @@ describe("HTTP transport DTOs", () => {
       type: "query",
     };
 
-    const query = await pipe.transform({ page: "2", perPage: "10" }, metadata);
+    const query = await pipe.transform(
+      { page: "2", perPage: "10", active: "false" },
+      metadata,
+    );
 
     expect(query).toBeInstanceOf(FindUsersQueryDto);
-    expect(query).toMatchObject({ page: 2, perPage: 10 });
+    expect(query).toMatchObject({ page: 2, perPage: 10, active: false });
+  });
+
+  it("rejects an invalid boolean query value", async () => {
+    const metadata: ArgumentMetadata = {
+      data: undefined,
+      metatype: FindUsersQueryDto,
+      type: "query",
+    };
+
+    await expect(
+      pipe.transform({ active: "yes" }, metadata),
+    ).rejects.toMatchObject({ status: 422 });
   });
 
   it("rejects an invalid UUID before it reaches the application", async () => {

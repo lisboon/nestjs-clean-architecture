@@ -8,7 +8,7 @@ export interface FindAllCompaniesUseCaseInputDto {
   sortDir?: SortDirection;
   name?: string;
   slug?: string;
-  active?: string;
+  active?: boolean;
 }
 
 export interface FindAllCompaniesUseCaseOutputDto {

@@ -44,11 +44,7 @@ export default class CompanyRepository implements CompanyGateway {
   async search(
     params: SearchParams<CompanyFilter>,
   ): Promise<SearchResult<Company>> {
-    const builder = new CompaniesQueryBuilder(
-      params.filter ?? {},
-      { sort: params.sort, sortDir: params.sortDir },
-      { page: params.page, perPage: params.perPage },
-    );
+    const builder = new CompaniesQueryBuilder(params);
     const query = builder.build();
     const where = { ...query.where, deletedAt: null };
 

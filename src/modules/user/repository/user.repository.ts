@@ -48,11 +48,7 @@ export default class UserRepository implements UserGateway {
   }
 
   async search(params: SearchParams<UserFilter>): Promise<SearchResult<User>> {
-    const builder = new UsersQueryBuilder(
-      params.filter ?? {},
-      { sort: params.sort, sortDir: params.sortDir },
-      { page: params.page, perPage: params.perPage },
-    );
+    const builder = new UsersQueryBuilder(params);
     const query = builder.build();
     const where = { ...query.where, deletedAt: null };
 
