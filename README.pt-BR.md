@@ -26,11 +26,13 @@ O código implementa os domínios de User, Auth e Company. Eles servem de refer�
 
 ## Arquitetura
 
-O código é dividido entre um core independente de framework e uma casca de infraestrutura.
+O código é organizado em módulos verticais. Cada módulo mantém seu domínio e casos de uso
+independentes de framework ao lado de suas portas, adaptadores e composição, enquanto
+`infra/http` hospeda a camada de transporte NestJS.
 
 ```
 src/
-├── modules/                # core da aplicação (sem imports de framework)
+├── modules/                # módulos verticais: core, portas, adaptadores e composição
 │   ├── @shared/            # base entity & value objects, erros de domínio,
 │   │                       # eventos, validação (Notification), abstrações
 │   │                       # de repositório, interface de transaction manager
@@ -52,7 +54,7 @@ src/
 │       ├── facade/         # ponto de entrada do módulo
 │       └── factory/        # montagem das dependências
 └── infra/                  # o framework vive aqui
-    ├── http/               # bootstrap do Nest, controllers, guards, filters
+    ├── http/               # bootstrap Nest, DTOs de transporte, controllers, guards, filters
     ├── database/           # client do Prisma + transaction manager
     └── services/           # implementações de bcrypt e JWT
 ```
@@ -60,6 +62,7 @@ src/
 Algumas decisões por trás da estrutura:
 
 - A camada de domínio nunca importa Nest ou Prisma. O ESLint bloqueia (`no-restricted-imports` aplicado a todo arquivo em `src/modules/**/domain/**`) e o CI roda a checagem como um gate próprio a cada push e pull request, então não fica só na boa intenção. Isso mantém a lógica de negócio fácil de testar isolada e o framework substituível.
+- Os casos de uso recebem inputs TypeScript simples e dependem apenas de tipos de domínio e portas. Os DTOs HTTP concentram os decorators de `class-validator`/`class-transformer`, permitindo que fila, CLI ou outro adaptador use a mesma API de aplicação sem herdar detalhes HTTP. O ESLint reforça essa fronteira em `src/modules/**/usecase/**`.
 - A validação passa por um objeto `Notification` em vez de lançar erro no primeiro problema, então a entidade reporta todos os campos inválidos de uma vez.
 - Cada caso de uso é uma classe única atrás de uma interface, composta por um facade e montada numa factory, o que mantém os controllers enxutos.
 - A autenticação é rígida de propósito. A validação de sessão lê o role do banco em vez de confiar no token, trocar a senha invalida os tokens emitidos antes da troca (`tokenValidAfter`), e a rota de login tem um rate limit mais apertado que o resto.

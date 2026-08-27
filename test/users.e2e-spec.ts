@@ -93,6 +93,13 @@ describe("Users (e2e)", () => {
     await request(app.getHttpServer()).get("/users").expect(401);
   });
 
+  it("rejects an invalid user id at the HTTP boundary (422)", async () => {
+    await request(app.getHttpServer())
+      .get("/users/not-a-uuid")
+      .set("Authorization", `Bearer ${adminAToken}`)
+      .expect(422);
+  });
+
   it("allows an admin to list users (200)", async () => {
     await request(app.getHttpServer())
       .get("/users")

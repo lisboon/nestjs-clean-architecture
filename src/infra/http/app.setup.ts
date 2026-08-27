@@ -15,6 +15,7 @@ export function configureApp(app: INestApplication): void {
     new ValidationPipe({
       exceptionFactory,
       errorHttpStatusCode: 422,
+      transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
     }),

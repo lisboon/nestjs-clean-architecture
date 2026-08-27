@@ -1,8 +1,6 @@
-import { IsUUID } from "class-validator";
 import BaseUseCase from "@/modules/@shared/usecase/base.usecase";
 
-export class DeleteCompanyUseCaseInputDto {
-  @IsUUID(4, { message: "Invalid company id" })
+export interface DeleteCompanyUseCaseInputDto {
   id: string;
 }
 
