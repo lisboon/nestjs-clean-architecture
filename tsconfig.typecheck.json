@@ -1,28 +1,10 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "incremental": true,
-    "skipLibCheck": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": false,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true,
-    "types": ["jest", "node"],
-    "paths": {}
-  },
-  "watchOptions": {
-    "watchFile": "fixedPollingInterval"
-  },
-  "exclude": ["prisma", "generated", "dist", "node_modules"]
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@prisma/client": ["./generated/prisma/client"]
+    }
+  }
 }
