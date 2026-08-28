@@ -165,7 +165,7 @@ pnpm test:e2e
 pnpm test:cov
 ```
 
-Os testes unitários cobrem as entidades, casos de uso e guards. A suíte e2e exercita as rotas de auth, user e company contra um banco real, incluindo os casos que importam: tokens revogados, proteção do último admin ativo, checagem de role e o bloqueio de deletar uma company que ainda tem usuários ativos.
+Os testes unitários cobrem as entidades, casos de uso e guards. A suíte e2e exercita as rotas de auth, user e company contra um banco real, incluindo os casos que importam: tokens revogados, proteção do último admin ativo, checagem de role e o bloqueio de deletar uma company que ainda tem usuários ativos. A suíte de persistência também verifica mapeamento dos repositories, rollback, conflito real de escrita serializável com retry e proteção concorrente do último admin ativo no PostgreSQL.
 
 ## Documentação da API
 

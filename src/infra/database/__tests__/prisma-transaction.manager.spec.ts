@@ -9,6 +9,11 @@ describe("PrismaTransactionManager", () => {
       code: "P2034",
       clientVersion: "7.9.0",
     });
+  const driverAdapterConflict = () =>
+    Object.assign(new Error("TransactionWriteConflict"), {
+      name: "DriverAdapterError",
+      cause: { kind: "TransactionWriteConflict" },
+    });
 
   it("wraps Prisma's client in an opaque transaction context", async () => {
     const transaction = jest.fn(
@@ -69,6 +74,25 @@ describe("PrismaTransactionManager", () => {
     await expect(manager.execute(callback)).resolves.toBe("committed");
     expect(transaction).toHaveBeenCalledTimes(3);
     expect(callback).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries write conflicts emitted directly by a Prisma driver adapter", async () => {
+    const callback = jest
+      .fn()
+      .mockRejectedValueOnce(driverAdapterConflict())
+      .mockResolvedValueOnce("committed");
+    const transaction = jest.fn(
+      async (fn: (client: Prisma.TransactionClient) => Promise<string>) =>
+        fn(transactionClient),
+    );
+    const manager = new PrismaTransactionManager(
+      { $transaction: transaction } as unknown as PrismaClient,
+      { retryDelayMs: 0 },
+    );
+
+    await expect(manager.execute(callback)).resolves.toBe("committed");
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
   it("rethrows a conflict after exhausting the retry limit", async () => {

@@ -165,7 +165,7 @@ pnpm test:e2e
 pnpm test:cov
 ```
 
-Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth, user and company routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, role enforcement, and blocking deletion of a company that still has active users.
+Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth, user and company routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, role enforcement, and blocking deletion of a company that still has active users. Its persistence suite also verifies repository mapping, rollback, a real serializable write conflict with retry, and concurrent protection of the last active admin against PostgreSQL.
 
 ## API documentation
 

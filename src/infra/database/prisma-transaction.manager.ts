@@ -52,12 +52,22 @@ export class PrismaTransactionManager implements TransactionManager {
     }
   }
 
-  private isRetryableConflict(
-    error: unknown,
-  ): error is Prisma.PrismaClientKnownRequestError {
-    return (
+  private isRetryableConflict(error: unknown): boolean {
+    const isKnownPrismaConflict =
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034"
+      error.code === "P2034";
+
+    if (isKnownPrismaConflict) return true;
+    if (!(error instanceof Error) || error.name !== "DriverAdapterError") {
+      return false;
+    }
+
+    const cause = (error as Error & { cause?: unknown }).cause;
+    return (
+      typeof cause === "object" &&
+      cause !== null &&
+      "kind" in cause &&
+      cause.kind === "TransactionWriteConflict"
     );
   }
 
