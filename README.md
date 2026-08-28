@@ -1,9 +1,8 @@
-<p align="center">
-  <h1 align="center">Backend API · NestJS + Clean Architecture</h1>
-</p>
+<h1 align="center">NestJS Clean Architecture</h1>
 
 <p align="center">
-  NestJS backend starter built with Domain-Driven Design and Clean Architecture. The business rules stay in plain TypeScript and the framework stays at the edges.
+  Production-ready backend template built with DDD, hexagonal architecture and NestJS.<br />
+  Business rules stay in plain TypeScript; NestJS, Prisma and HTTP stay at the edges.
 </p>
 
 <p align="center">
@@ -11,230 +10,116 @@
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5.9" />
   <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white" alt="Prisma 7" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License MIT" />
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License" />
 </p>
 
-<p align="center">
-  <strong>English</strong> · <a href="./README.pt-BR.md">Português</a>
-</p>
+<p align="center"><strong>English</strong> · <a href="./README.pt-BR.md">Português</a></p>
 
-## Description
+## Why this template?
 
-NestJS backend built with DDD and Clean Architecture. The domain layer doesn't depend on Nest, Prisma or HTTP: the business rules are plain TypeScript classes and the framework stays at the boundary. Controllers, guards, the Prisma adapter and the JWT/bcrypt implementations are all infrastructure plugged into interfaces (ports).
+Most backend starters show framework syntax. This one demonstrates how to protect business rules as the system grows: domain entities and use cases depend on ports, while NestJS controllers, Prisma repositories, JWT and bcrypt are replaceable adapters.
 
-The code implements the User, Auth and Company domains. They work as a reference for how the other modules should be built. The infrastructure (CI, Docker, migrations, validation, linting, commit hooks) is already set up, so adding a new domain doesn't mean redoing the foundation.
+The included User, Auth and Company modules exercise real cross-aggregate rules, transactions and concurrency—not only isolated CRUD.
+
+## Highlights
+
+- Domain and use cases have no NestJS, Prisma or HTTP dependencies; ESLint enforces the boundary.
+- Typed repository ports, Prisma adapters, mappers, query builders, facades and factories.
+- Serializable transactions with bounded retry for PostgreSQL write conflicts.
+- Race-safe uniqueness and protection of cross-aggregate invariants.
+- Database-backed session validation, token revocation, roles, bcrypt and rate limiting.
+- Validated runtime configuration, CORS allowlist, Helmet and request correlation IDs.
+- OpenAPI contracts, liveness/readiness probes and graceful shutdown.
+- Unit tests plus isolated PostgreSQL E2E and concurrency tests.
+- Multi-stage production and migration images, CI, Dependabot and commit hooks.
 
 ## Architecture
 
-The code is organized as vertical modules. Each module keeps its framework-agnostic domain and
-use cases beside its ports, adapters and composition code, while `infra/http` hosts the NestJS
-transport layer.
-
-```
+```text
 src/
-├── modules/                # vertical modules: core, ports, adapters & composition
-│   ├── @shared/            # base entity & value objects, domain errors,
-│   │                       # events, validation (Notification), repository
-│   │                       # abstractions, transaction manager interface
-│   ├── user/               # auth + user CRUD (a User belongs to one Company)
-│   │   ├── domain/         # User entity + validators
-│   │   ├── usecase/        # one class per use case (login, create, update,
-│   │   │                   # delete, find, change-password, validate-session)
-│   │   ├── gateway/        # repository interface (the port)
-│   │   ├── repository/     # Prisma adapter + query builder
-│   │   ├── facade/         # module entry point
-│   │   └── factory/        # dependency wiring
-│   └── company/            # company CRUD; a User belongs to one Company (1:N)
-│       ├── domain/         # Company entity + validators
-│       ├── usecase/        # create, find, update, delete (with cross-aggregate
-│       │                   # rules: a user needs a valid company, and a company
-│       │                   # with active users cannot be deleted)
-│       ├── gateway/        # repository interface (the port)
-│       ├── repository/     # Prisma adapter + query builder
-│       ├── facade/         # module entry point
-│       └── factory/        # dependency wiring
-└── infra/                  # the framework lives here
-    ├── http/               # Nest bootstrap, transport DTOs, controllers, guards, filters
-    ├── database/           # Prisma client + transaction manager
-    └── services/           # bcrypt and JWT implementations
+├── modules/
+│   ├── @shared/          # domain primitives, errors, repository and transaction ports
+│   ├── user/             # domain, use cases, gateway, Prisma adapter, facade and factory
+│   └── company/          # second aggregate and cross-aggregate rules
+└── infra/
+    ├── http/             # NestJS controllers, DTOs, guards, filters and bootstrap
+    ├── database/         # Prisma client and transaction adapter
+    └── services/         # JWT and bcrypt adapters
 ```
 
-Some decisions behind the structure:
+HTTP DTOs own transport validation. Use cases receive plain inputs. Repository interfaces return domain entities, and persistence mappers isolate Prisma records. An opaque transaction context lets related repositories share one atomic transaction without leaking ORM types into the application core.
 
--   The domain layer never imports Nest or Prisma. ESLint blocks it (`no-restricted-imports` applied to every file under `src/modules/**/domain/**`) and CI runs the check as its own gate on every push and pull request, so it isn't left to good intentions. That keeps the business logic easy to test on its own and the framework replaceable.
-- Use cases receive plain TypeScript inputs and depend only on domain types and ports. HTTP DTOs own `class-validator`/`class-transformer` decorators, so a queue, CLI or another adapter can call the same application API without inheriting HTTP concerns. ESLint enforces this boundary under `src/modules/**/usecase/**`.
-- Gateways define persistence ports, while repository adapters translate `SearchParams` into module-specific queries typed with Prisma's generated inputs. This keeps ORM details at the edge without a dynamic query DSL shared by unrelated domains. Application-level uniqueness checks provide early feedback, while adapters translate PostgreSQL unique-constraint races into the same domain validation errors instead of leaking Prisma failures.
-- Transactional use cases receive an opaque core context. Invariant reads and writes share that context, and paginated searches can opt into it when a consistent transaction is required. User creation and company deletion recheck their cross-aggregate invariant in serializable transactions, so concurrent requests cannot leave an active user attached to a deleted company. The Prisma adapter wraps and validates its generated `TransactionClient`, while typed model mappers isolate persistence records from domain entities. No ORM type crosses into the domain or use-case layers. Prisma write conflicts (`P2034`) retry the whole transaction with bounded exponential backoff, so callbacks must keep non-idempotent external effects outside the transaction.
-- Validation runs through a `Notification` object instead of throwing on the first error, so an entity can report every invalid field at once.
-- Each use case is a single class behind an interface, composed by a facade and wired in a factory, which keeps the controllers thin.
-- Auth is strict on purpose. Session validation reads the role and company status from the database instead of trusting the token, inactive companies block login and existing sessions, changing a password invalidates tokens issued before the change (`tokenValidAfter`), and the login route has a tighter rate limit than the rest.
+This structure has deliberate ceremony. It pays off when business rules, integrations and teams grow; for a small CRUD with no expected growth, it may be more architecture than necessary.
 
-A couple of honest trade-offs worth naming:
+## Quick start
 
-- The ceremony (a use case, DTO, gateway, repository, facade and factory per operation) is deliberately expensive for a plain CRUD. The payoff (testability and a replaceable framework) only shows up as the domain grows. That is why `Company` and its 1:N link to `User` are here: to show the structure holding across a second, related aggregate instead of a single isolated entity. For one small entity it would be overkill, and that is fine to admit.
-- `validate-session` hits the database on every request on purpose, so a revoked or demoted user loses access immediately. At higher traffic a Redis cache keyed by user and busted through `tokenValidAfter` would cut that load. It is left out on purpose: this is a template, and the extra infrastructure does not pay for itself yet.
-
-## Stack
-
-- **Runtime:** Node.js 24, pnpm
-- **Framework:** NestJS 11, TypeScript 5.9 (built with SWC)
-- **Database:** PostgreSQL 16 via Prisma 7 (`@prisma/adapter-pg`)
-- **Auth & security:** JWT (HS256), bcrypt, Helmet, `@nestjs/throttler`, CORS allowlist
-- **Validation:** class-validator / class-transformer
-- **Docs:** Swagger (OpenAPI)
-- **Tests:** Jest 30, Supertest (unit + e2e)
-- **Tooling:** ESLint 9 (flat config) + Prettier, Husky, commitlint, lint-staged, Dependabot, GitHub Actions, Docker
-
-## Prerequisites
-
-- Node.js 24 (an `.nvmrc` is provided, run `nvm use`)
-- pnpm
-- PostgreSQL 16, or Docker if you'd rather not install it locally
-
-## Project setup
+Requirements: Node.js 24, pnpm and PostgreSQL 16—or Docker.
 
 ```bash
+git clone https://github.com/lisboon/nestjs-clean-architecture.git
+cd nestjs-clean-architecture
 pnpm install
-cp .env.example .env   # then fill in the values
-```
-
-Generate the Prisma client and apply the migrations:
-
-```bash
+cp .env.example .env
 pnpm prisma:generate
 pnpm prisma:migrate
-```
-
-Seed the first company and admin user (uses the `SEED_COMPANY_*` and `SEED_ADMIN_*` variables from your `.env`):
-
-```bash
 pnpm prisma:seed
-```
-
-## Compile and run the project
-
-```bash
-# development (watch mode)
 pnpm start:dev
-
-# production
-pnpm build
-pnpm start:prod
 ```
 
-The API starts on the port defined by `PORT` (default `3001`).
+The API runs at `http://localhost:3001`; Swagger is available at `/api-docs` outside production.
 
-### With Docker
-
-The compose file brings up the API together with a PostgreSQL container and runs the migrations on startup:
+### Docker
 
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
 
-- API at `http://localhost:3001`
+This starts PostgreSQL, applies migrations and runs the API. Run `pnpm exec prisma studio` on the host to inspect the database at `http://localhost:5555`.
 
-To inspect the containerized database with Prisma Studio, run it on the host in another terminal:
+## Commands
 
-```bash
-pnpm exec prisma studio
-```
+| Command                         | Purpose                                    |
+| ------------------------------- | ------------------------------------------ |
+| `pnpm start:dev`                | Run with watch mode                        |
+| `pnpm build && pnpm start:prod` | Build and run production code              |
+| `pnpm lint` / `pnpm typecheck`  | Static quality gates                       |
+| `pnpm test`                     | Unit tests                                 |
+| `pnpm test:e2e`                 | Isolated PostgreSQL E2E tests on port 5433 |
+| `pnpm test:openapi`             | Verify the generated API contract          |
+| `pnpm test:cov`                 | Generate coverage report                   |
 
-It uses the `DATABASE_URL` from `.env` and is available at `http://localhost:5555`.
+## Runtime contract
 
-Operational probes are available without authentication:
+Required settings are documented in [`.env.example`](./.env.example) and validated before startup. Important endpoints and behaviors:
 
-- `GET /health/live` reports whether the HTTP process is running.
-- `GET /health/ready` verifies PostgreSQL connectivity and returns `503` while the application cannot serve traffic.
+- `GET /health/live` checks the process; `GET /health/ready` checks PostgreSQL.
+- Every response carries `X-Request-Id`; production logs are structured and omit sensitive data.
+- Expected errors use `{ statusCode, error, message }`; validation errors return field issues.
+- Swagger is disabled in production.
 
-The production image uses the readiness endpoint for its Docker healthcheck. On `SIGTERM` or `SIGINT`, Nest shuts down gracefully and closes the Prisma connection pool.
-
-Every HTTP response includes an `X-Request-Id`. A valid caller-provided ID is preserved; otherwise the API generates a UUID. CORS allows browser clients to send the header and exposes it to frontend code. Requests are logged with that ID, method, path, status and duration, using structured JSON in production. Bodies, query strings and authorization headers are never logged.
-
-## Environment variables
-
-| Variable              | Description                                              |
-| --------------------- | -------------------------------------------------------- |
-| `NODE_ENV`            | `development`, `test` or `production`                    |
-| `PORT`                | HTTP port (default `3001`)                               |
-| `DATABASE_URL`        | PostgreSQL connection string                             |
-| `E2E_DATABASE_URL`    | Optional external E2E database; skips local test Docker  |
-| `CORS_ORIGINS`        | Comma-separated list of allowed origins                  |
-| `JWT_SECRET`          | JWT signing secret (min. 32 chars in non-test envs)      |
-| `JWT_EXPIRES_IN`      | Token lifetime (e.g. `7d`)                               |
-| `BCRYPT_ROUNDS`       | bcrypt cost factor (10 to 15)                            |
-| `THROTTLE_LIMIT`      | Default request limit per window                         |
-| `THROTTLE_WINDOW_MS`  | Rate-limit window in milliseconds                        |
-| `SEED_ADMIN_EMAIL`    | Email of the admin created by the seed                   |
-| `SEED_ADMIN_PASSWORD` | Password of the seeded admin                             |
-| `SEED_ADMIN_NAME`     | Display name of the seeded admin                         |
-| `SEED_COMPANY_NAME`   | Name of the company created by the seed                   |
-| `SEED_COMPANY_SLUG`   | Unique slug of the company created by the seed            |
-
-Runtime configuration is parsed and validated before the application starts. Invalid values are reported together, including malformed URLs, durations and numeric ranges.
-
-## Run tests
-
-```bash
-# unit tests
-pnpm test
-
-# e2e tests (starts an isolated PostgreSQL on port 5433)
-pnpm test:e2e
-
-# stop the local E2E database
-pnpm test:e2e:down
-
-# coverage
-pnpm test:cov
-```
-
-The E2E command recreates the `backend-test-db` Compose service, waits for PostgreSQL, applies migrations and runs Jest with test-only environment values. Its fresh temporary database uses port `5433` and never shares the development volume. Set `E2E_DATABASE_URL` to use an existing external test database instead; CI automatically reuses its PostgreSQL service.
-
-Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth, user and company routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, role enforcement, and blocking deletion of a company that still has active users. Its persistence suite also verifies repository mapping, rollback, a real serializable write conflict with retry, and concurrent protection of the last active admin against PostgreSQL.
-
-## API documentation
-
-In non-production environments, Swagger is served at:
-
-```
-http://localhost:3001/api-docs
-```
-
-The OpenAPI schemas are generated from transport DTOs at build time. CI verifies that request and response schemas remain present and that sensitive fields such as passwords are not exposed in response models.
-
-Expected client errors are documented per operation. Simple errors use `{ statusCode, error, message }`; validation errors keep the same envelope and return an array of `{ field, message }` issues. Domain errors remain independent of HTTP status codes and are translated by exception filters at the transport boundary.
-
-## Code quality
-
-```bash
-pnpm lint        # ESLint + Prettier
-pnpm lint:fix    # apply safe automatic fixes locally
-pnpm typecheck   # tsc --noEmit
-```
-
-Commits follow the [Conventional Commits](https://www.conventionalcommits.org/) spec, enforced by commitlint through a Husky hook, and lint-staged runs ESLint on staged files before each commit. CI runs lint, type-check, build, the full test suite, a Docker build and a Prisma schema-drift check on every push and pull request.
-
-CI also rejects high-severity vulnerabilities in production dependencies. The Prisma CLI and `@prisma/client` generator stay in `devDependencies`; the production image contains only the generated client and its runtime utilities. Its Docker build fails if either development package leaks back into the runtime layer.
+The seed creates the initial company and admin from `SEED_COMPANY_*` and `SEED_ADMIN_*` values.
 
 ## Deployment
 
-The multi-stage `Dockerfile` exposes two independent deployment artifacts:
-
-- the default `runner` target contains the application, production dependencies, a non-root user, and a healthcheck;
-- the `migrator` target contains the Prisma CLI and migration history, with `prisma migrate deploy` as its entrypoint.
-
-Build both from the same revision and run the migration image once as a release job before rolling out the application:
+The default Docker target is a non-root runtime image. The `migrator` target contains Prisma tooling and migration history:
 
 ```bash
 docker build --target migrator -t nestjs-app-migrator .
 docker run --rm --env DATABASE_URL="$DATABASE_URL" nestjs-app-migrator
-
 docker build --target runner -t nestjs-app-backend .
 ```
 
-This keeps build-time tooling out of the long-running API image without depending on a developer checkout during deployment. CI builds both targets and applies the migrations from the migration image against PostgreSQL. Provide environment variables through your orchestrator; they are never baked into either image.
+Run the migrator once before rolling out the matching application revision. CI builds both images, applies real migrations, verifies schema drift, runs all tests and rejects high-severity production vulnerabilities.
 
-## License
+## Trade-offs
 
-[MIT](./LICENSE).
+- Session validation queries PostgreSQL on every authenticated request so revocation and role changes take effect immediately. High-traffic systems can add an invalidation-aware cache.
+- Transaction callbacks must keep non-idempotent external effects outside the retryable transaction.
+- This template provides architectural foundations, not domain-agnostic abstractions for every future requirement.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and [SECURITY.md](./SECURITY.md) for private vulnerability reporting.
+
+Licensed under the [MIT License](./LICENSE).
