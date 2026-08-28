@@ -194,6 +194,8 @@ http://localhost:3001/api-docs
 
 Os schemas OpenAPI são gerados a partir dos DTOs de transporte durante o build. A CI verifica que os schemas de entrada e saída continuem presentes e que campos sensíveis, como senhas, não sejam expostos nos modelos de resposta.
 
+Os erros esperados do cliente são documentados por operação. Erros simples usam `{ statusCode, error, message }`; erros de validação mantêm o mesmo envelope e retornam uma lista de problemas `{ field, message }`. Os erros de domínio permanecem independentes de status HTTP e são traduzidos por exception filters na borda de transporte.
+
 ## Qualidade de código
 
 ```bash

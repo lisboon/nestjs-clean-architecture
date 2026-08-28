@@ -5,9 +5,9 @@ import { NotFoundErrorFilter } from "./shared/errors/not-found.filter";
 import { UnauthorizedErrorFilter } from "./shared/errors/unauthorized.filter";
 import { ForbiddenErrorFilter } from "./shared/errors/forbidden.filter";
 import { BadLoginErrorFilter } from "./shared/errors/bad-login.filter";
-import { TokenExpiredErrorFilter } from "./shared/errors/token-expired.filter";
 import exceptionFactory from "./shared/errors/exception-factory";
 import { createHttpObservabilityMiddleware } from "./shared/observability/http-observability.middleware";
+import { TooManyRequestsFilter } from "./shared/errors/too-many-requests.filter";
 
 export function configureApp(app: INestApplication): void {
   app.use(createHttpObservabilityMiddleware());
@@ -29,6 +29,6 @@ export function configureApp(app: INestApplication): void {
     new UnauthorizedErrorFilter(),
     new ForbiddenErrorFilter(),
     new BadLoginErrorFilter(),
-    new TokenExpiredErrorFilter(),
+    new TooManyRequestsFilter(),
   );
 }
