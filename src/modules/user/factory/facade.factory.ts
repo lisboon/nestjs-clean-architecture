@@ -13,14 +13,18 @@ import UpdateUserUseCase from "../usecase/update-user/update-user.usecase";
 import ChangePasswordUseCase from "../usecase/change-password/change-password.usecase";
 import DeleteUserUseCase from "../usecase/delete-user/delete-user.usecase";
 import UserFacade from "../facade/user.facade";
+import { loadApplicationConfig } from "@/infra/config/application.config";
 
 export default class UserFacadeFactory {
   static create(): UserFacade {
+    const config = loadApplicationConfig();
     const userRepository = new UserRepository(prisma);
     const companyRepository = new CompanyRepository(prisma);
     const transactionManager = new PrismaTransactionManager(prisma);
-    const passwordHashService = new BcryptPasswordHashService();
-    const jwtTokenService = new JwtTokenServiceImpl();
+    const passwordHashService = new BcryptPasswordHashService(
+      config.bcryptRounds,
+    );
+    const jwtTokenService = new JwtTokenServiceImpl(config.jwt);
 
     return new UserFacade(
       new LoginUseCase(

@@ -1,12 +1,15 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { loadApplicationConfig } from "@/infra/config/application.config";
+
+const config = loadApplicationConfig();
 
 const isCli =
   process.env.npm_lifecycle_event === "cli" ||
   process.env.npm_lifecycle_event === "command";
 
-const isProduction = process.env.NODE_ENV === "production";
-const isTest = process.env.NODE_ENV === "test";
+const isProduction = config.nodeEnv === "production";
+const isTest = config.nodeEnv === "test";
 
 const getLogLevels = (): Prisma.LogLevel[] => {
   if (isTest) return [];
@@ -15,7 +18,7 @@ const getLogLevels = (): Prisma.LogLevel[] => {
 };
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: config.databaseUrl,
 });
 
 const prisma = new PrismaClient({

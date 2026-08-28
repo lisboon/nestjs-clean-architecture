@@ -6,6 +6,9 @@ import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
 import { CompanyModule } from "./company/company.module";
+import { loadApplicationConfig } from "@/infra/config/application.config";
+
+const config = loadApplicationConfig();
 
 @Module({
   imports: [
@@ -13,8 +16,8 @@ import { CompanyModule } from "./company/company.module";
       throttlers: [
         {
           name: "default",
-          ttl: Number(process.env.THROTTLE_WINDOW_MS ?? 60_000),
-          limit: Number(process.env.THROTTLE_LIMIT ?? 30),
+          ttl: config.throttle.windowMs,
+          limit: config.throttle.limit,
         },
       ],
     }),
