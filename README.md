@@ -142,6 +142,8 @@ Operational probes are available without authentication:
 
 The production image uses the readiness endpoint for its Docker healthcheck. On `SIGTERM` or `SIGINT`, Nest shuts down gracefully and closes the Prisma connection pool.
 
+Every HTTP response includes an `X-Request-Id`. A valid caller-provided ID is preserved; otherwise the API generates a UUID. Requests are logged with that ID, method, path, status and duration, using structured JSON in production. Bodies, query strings and authorization headers are never logged.
+
 ## Environment variables
 
 | Variable              | Description                                              |
