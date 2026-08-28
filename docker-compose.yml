@@ -41,6 +41,24 @@ services:
       retries: 5
     restart: unless-stopped
 
+  backend-test-db:
+    image: postgres:16-alpine
+    container_name: backend-test-db
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: backend_test
+      POSTGRES_PASSWORD: backend_test
+      POSTGRES_DB: backend_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend_test -d backend_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
 volumes:
   backend_db_data:
     driver: local
