@@ -23,7 +23,7 @@ export default class DeleteUserUseCase implements DeleteUserUseCaseInterface {
       throw new NotFoundError(data.id, User);
     }
 
-    if (user.isAdmin) {
+    if (user.isAdmin && user.active) {
       await this.transactionManager.execute(
         async (trx) => {
           const activeAdmins = await this.userGateway.countActiveAdmins(trx);

@@ -105,6 +105,25 @@ describe("UpdateUserUseCase", () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
+  it("changes the role of an inactive admin without checking active admins", async () => {
+    const admin = makeUser({ role: UserRole.ADMIN });
+    admin.deactivate();
+    const { useCase, transactionManager, userGateway } = makeSut({
+      user: admin,
+      activeAdmins: 1,
+    });
+
+    const output = await useCase.execute({
+      id: admin.id,
+      role: UserRole.VIEWER,
+    });
+
+    expect(transactionManager.execute).not.toHaveBeenCalled();
+    expect(userGateway.countActiveAdmins).not.toHaveBeenCalled();
+    expect(userGateway.update).toHaveBeenCalledWith(admin);
+    expect(output.role).toBe(UserRole.VIEWER);
+  });
+
   it("does not open a transaction for non-admin updates", async () => {
     const { useCase, user, transactionManager } = makeSut();
 
