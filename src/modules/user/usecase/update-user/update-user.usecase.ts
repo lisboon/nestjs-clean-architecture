@@ -37,6 +37,7 @@ export default class UpdateUserUseCase implements UpdateUserUseCaseInterface {
 
     const losesAdminPrivileges =
       user.isAdmin &&
+      user.active &&
       ((data.role !== undefined && data.role !== UserRole.ADMIN) ||
         data.active === false);
 

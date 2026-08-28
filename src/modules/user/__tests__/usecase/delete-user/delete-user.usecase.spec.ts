@@ -76,6 +76,22 @@ describe("DeleteUserUseCase", () => {
     expect(admin.deletedAt).toBeUndefined();
   });
 
+  it("deletes an inactive admin without checking active admins", async () => {
+    const admin = makeUser(UserRole.ADMIN);
+    admin.deactivate();
+    const { useCase, transactionManager, userGateway } = makeSut({
+      user: admin,
+      activeAdmins: 1,
+    });
+
+    await useCase.execute({ id: admin.id });
+
+    expect(transactionManager.execute).not.toHaveBeenCalled();
+    expect(userGateway.countActiveAdmins).not.toHaveBeenCalled();
+    expect(userGateway.update).toHaveBeenCalledWith(admin);
+    expect(admin.deletedAt).toBeInstanceOf(Date);
+  });
+
   it("throws NotFoundError when user does not exist", async () => {
     const { useCase, userGateway } = makeSut();
     userGateway.findById.mockResolvedValue(null);
