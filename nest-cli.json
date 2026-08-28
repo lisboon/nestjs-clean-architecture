@@ -4,7 +4,16 @@
   "sourceRoot": "src",
   "entryFile": "infra/http/main.js",
   "compilerOptions": {
-    "plugins": [],
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "dtoFileNameSuffix": [".dto.ts"],
+          "introspectComments": false
+        }
+      }
+    ],
     "deleteOutDir": true,
     "builder": "swc",
     "typeCheck": true

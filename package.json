@@ -25,6 +25,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "node scripts/run-e2e.mjs",
+    "test:openapi": "node scripts/check-openapi-contract.mjs",
     "test:e2e:down": "docker compose --profile test stop backend-test-db"
   },
   "dependencies": {

@@ -10,7 +10,13 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import { AuthGuard, JwtPayload } from "../auth/auth-guard";
 import { RolesGuard } from "../auth/roles-guard";
 import { Roles } from "../shared/roles.decorator";
@@ -21,6 +27,12 @@ import { ChangePasswordBodyDto } from "./dto/change-password.body.dto";
 import { CreateUserBodyDto } from "./dto/create-user.body.dto";
 import { FindUsersQueryDto } from "./dto/find-users.query.dto";
 import { UuidParamDto } from "../shared/dto/uuid-param.dto";
+import {
+  ChangePasswordResponseDto,
+  DeleteUserResponseDto,
+  UserResponseDto,
+  UsersPageResponseDto,
+} from "./dto/user.response.dto";
 
 @ApiTags("Users")
 @ApiBearerAuth()
@@ -32,6 +44,7 @@ export class UsersController {
   @Post()
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Create user (admin only)" })
+  @ApiCreatedResponse({ type: UserResponseDto })
   async create(@Body() body: CreateUserBodyDto) {
     return this.userService.create(body);
   }
@@ -39,6 +52,7 @@ export class UsersController {
   @Get()
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "List users with pagination and filters" })
+  @ApiOkResponse({ type: UsersPageResponseDto })
   async findAll(@Query() query: FindUsersQueryDto) {
     return this.userService.findAll(query);
   }
@@ -46,6 +60,7 @@ export class UsersController {
   @Patch("me/password")
   @Roles({ role: UserRole.USER })
   @ApiOperation({ summary: "Change own password" })
+  @ApiOkResponse({ type: ChangePasswordResponseDto })
   async changePassword(
     @Request() req: { user: JwtPayload },
     @Body() body: ChangePasswordBodyDto,
@@ -60,6 +75,7 @@ export class UsersController {
   @Get(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Find user by id (admin only)" })
+  @ApiOkResponse({ type: UserResponseDto })
   async findById(@Param() params: UuidParamDto) {
     return this.userService.findById({ id: params.id });
   }
@@ -67,6 +83,7 @@ export class UsersController {
   @Patch(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Update user (admin only)" })
+  @ApiOkResponse({ type: UserResponseDto })
   async update(@Param() params: UuidParamDto, @Body() body: UpdateUserBodyDto) {
     return this.userService.update({ id: params.id, ...body });
   }
@@ -74,6 +91,7 @@ export class UsersController {
   @Delete(":id")
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Soft delete user (admin only)" })
+  @ApiOkResponse({ type: DeleteUserResponseDto })
   async delete(@Param() params: UuidParamDto) {
     return this.userService.delete({ id: params.id });
   }

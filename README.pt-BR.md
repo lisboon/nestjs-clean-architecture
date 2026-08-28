@@ -192,6 +192,8 @@ Em ambientes que não são de produção, o Swagger fica em:
 http://localhost:3001/api-docs
 ```
 
+Os schemas OpenAPI são gerados a partir dos DTOs de transporte durante o build. A CI verifica que os schemas de entrada e saída continuem presentes e que campos sensíveis, como senhas, não sejam expostos nos modelos de resposta.
+
 ## Qualidade de código
 
 ```bash

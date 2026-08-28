@@ -6,7 +6,12 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { AuthGuard, JwtPayload } from "../auth/auth-guard";
 import { RolesGuard } from "../auth/roles-guard";
@@ -14,6 +19,7 @@ import { Roles } from "../shared/roles.decorator";
 import { UserRole } from "@/modules/@shared/domain/enums";
 import { UserService } from "./user.service";
 import { LoginBodyDto } from "./dto/login.body.dto";
+import { LoginResponseDto, UserResponseDto } from "./dto/user.response.dto";
 
 const AUTH_THROTTLE = { default: { limit: 5, ttl: 60_000 } } as const;
 
@@ -25,6 +31,7 @@ export class AuthController {
   @Post("login")
   @Throttle(AUTH_THROTTLE)
   @ApiOperation({ summary: "Login with email and password" })
+  @ApiOkResponse({ type: LoginResponseDto })
   async login(@Body() body: LoginBodyDto) {
     return this.userService.login(body);
   }
@@ -34,6 +41,7 @@ export class AuthController {
   @Roles({ role: UserRole.USER })
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get current authenticated user" })
+  @ApiOkResponse({ type: UserResponseDto })
   async me(@Request() req: { user: JwtPayload }) {
     return this.userService.findById({ id: req.user.userId });
   }

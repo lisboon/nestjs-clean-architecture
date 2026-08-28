@@ -53,6 +53,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify OpenAPI contract
+        run: pnpm test:openapi
+
   test:
     name: Test
     runs-on: ubuntu-latest
