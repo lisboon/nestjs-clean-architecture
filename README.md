@@ -105,7 +105,7 @@ pnpm prisma:generate
 pnpm prisma:migrate
 ```
 
-Seed the first admin user (uses the `SEED_ADMIN_*` variables from your `.env`):
+Seed the first company and admin user (uses the `SEED_COMPANY_*` and `SEED_ADMIN_*` variables from your `.env`):
 
 ```bash
 pnpm prisma:seed
@@ -168,6 +168,8 @@ Every HTTP response includes an `X-Request-Id`. A valid caller-provided ID is pr
 | `SEED_ADMIN_EMAIL`    | Email of the admin created by the seed                   |
 | `SEED_ADMIN_PASSWORD` | Password of the seeded admin                             |
 | `SEED_ADMIN_NAME`     | Display name of the seeded admin                         |
+| `SEED_COMPANY_NAME`   | Name of the company created by the seed                   |
+| `SEED_COMPANY_SLUG`   | Unique slug of the company created by the seed            |
 
 Runtime configuration is parsed and validated before the application starts. Invalid values are reported together, including malformed URLs, durations and numeric ranges.
 
