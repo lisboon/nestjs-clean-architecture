@@ -20,7 +20,7 @@ export class PrismaTransactionManager implements TransactionManager {
     private readonly prisma: PrismaClient,
     options: PrismaTransactionManagerOptions = {},
   ) {
-    this.maxRetries = this.normalizeOption(options.maxRetries, 2, true);
+    this.maxRetries = this.normalizeOption(options.maxRetries, 4, true);
     this.retryDelayMs = this.normalizeOption(options.retryDelayMs, 25);
   }
 
@@ -47,7 +47,9 @@ export class PrismaTransactionManager implements TransactionManager {
           throw error;
         }
 
-        await this.wait(this.retryDelayMs * 2 ** retry);
+        const exponentialDelay = this.retryDelayMs * 2 ** retry;
+        const jitter = exponentialDelay * Math.random();
+        await this.wait(exponentialDelay + jitter);
         retry += 1;
       }
     }

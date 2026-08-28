@@ -76,6 +76,27 @@ describe("PrismaTransactionManager", () => {
     expect(callback).toHaveBeenCalledTimes(3);
   });
 
+  it("allows four retries by default", async () => {
+    const callback = jest
+      .fn()
+      .mockRejectedValueOnce(transactionConflict())
+      .mockRejectedValueOnce(transactionConflict())
+      .mockRejectedValueOnce(transactionConflict())
+      .mockRejectedValueOnce(transactionConflict())
+      .mockResolvedValueOnce("committed");
+    const transaction = jest.fn(
+      async (fn: (client: Prisma.TransactionClient) => Promise<string>) =>
+        fn(transactionClient),
+    );
+    const manager = new PrismaTransactionManager(
+      { $transaction: transaction } as unknown as PrismaClient,
+      { retryDelayMs: 0 },
+    );
+
+    await expect(manager.execute(callback)).resolves.toBe("committed");
+    expect(transaction).toHaveBeenCalledTimes(5);
+  });
+
   it("retries write conflicts emitted directly by a Prisma driver adapter", async () => {
     const callback = jest
       .fn()
