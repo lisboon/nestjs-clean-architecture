@@ -142,6 +142,7 @@ docker compose up --build
 | `NODE_ENV`            | `development`, `test` or `production`                    |
 | `PORT`                | HTTP port (default `3001`)                               |
 | `DATABASE_URL`        | PostgreSQL connection string                             |
+| `E2E_DATABASE_URL`    | Optional external E2E database; skips local test Docker  |
 | `CORS_ORIGINS`        | Comma-separated list of allowed origins                  |
 | `JWT_SECRET`          | JWT signing secret (min. 32 chars in non-test envs)      |
 | `JWT_EXPIRES_IN`      | Token lifetime (e.g. `7d`)                               |
@@ -158,12 +159,17 @@ docker compose up --build
 # unit tests
 pnpm test
 
-# e2e tests (requires a running PostgreSQL)
+# e2e tests (starts an isolated PostgreSQL on port 5433)
 pnpm test:e2e
+
+# stop the local E2E database
+pnpm test:e2e:down
 
 # coverage
 pnpm test:cov
 ```
+
+The E2E command recreates the `backend-test-db` Compose service, waits for PostgreSQL, applies migrations and runs Jest with test-only environment values. Its fresh temporary database uses port `5433` and never shares the development volume. Set `E2E_DATABASE_URL` to use an existing external test database instead; CI automatically reuses its PostgreSQL service.
 
 Unit tests cover the entities, use cases and guards. The e2e suite exercises the auth, user and company routes against a real database, including the cases that matter: revoked tokens, protecting the last active admin, role enforcement, and blocking deletion of a company that still has active users. Its persistence suite also verifies repository mapping, rollback, a real serializable write conflict with retry, and concurrent protection of the last active admin against PostgreSQL.
 

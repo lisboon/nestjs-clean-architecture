@@ -142,6 +142,7 @@ docker compose up --build
 | `NODE_ENV`            | `development`, `test` ou `production`                    |
 | `PORT`                | Porta HTTP (padrão `3001`)                               |
 | `DATABASE_URL`        | String de conexão do PostgreSQL                          |
+| `E2E_DATABASE_URL`    | Banco E2E externo opcional; ignora o Docker local        |
 | `CORS_ORIGINS`        | Lista de origens permitidas, separadas por vírgula       |
 | `JWT_SECRET`          | Segredo de assinatura do JWT (mín. 32 chars fora de test)|
 | `JWT_EXPIRES_IN`      | Tempo de vida do token (ex.: `7d`)                       |
@@ -158,12 +159,17 @@ docker compose up --build
 # testes unitários
 pnpm test
 
-# testes e2e (precisa de um PostgreSQL rodando)
+# testes e2e (sobe um PostgreSQL isolado na porta 5433)
 pnpm test:e2e
+
+# para o banco E2E local
+pnpm test:e2e:down
 
 # cobertura
 pnpm test:cov
 ```
+
+O comando E2E recria o serviço Compose `backend-test-db`, aguarda o PostgreSQL, aplica as migrations e executa o Jest com variáveis exclusivas de teste. O banco temporário novo usa a porta `5433` e nunca compartilha o volume de desenvolvimento. Defina `E2E_DATABASE_URL` para usar um banco de teste externo; no CI, o runner reutiliza automaticamente o serviço PostgreSQL existente.
 
 Os testes unitários cobrem as entidades, casos de uso e guards. A suíte e2e exercita as rotas de auth, user e company contra um banco real, incluindo os casos que importam: tokens revogados, proteção do último admin ativo, checagem de role e o bloqueio de deletar uma company que ainda tem usuários ativos. A suíte de persistência também verifica mapeamento dos repositories, rollback, conflito real de escrita serializável com retry e proteção concorrente do último admin ativo no PostgreSQL.
 
