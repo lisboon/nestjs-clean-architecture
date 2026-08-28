@@ -7,25 +7,24 @@ import { SearchParams } from "@/modules/@shared/repository/search-params";
 import { SearchResult } from "@/modules/@shared/repository/search-result";
 import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 import { normalizeSlug } from "@/modules/@shared/domain/utils/slug";
-import { PrismaTransactionContext } from "@/infra/database/prisma-transaction.context";
+import { resolvePrismaClient } from "@/infra/database/prisma-transaction.context";
 import { CompanyModelMapper } from "./company.model.mapper";
+import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
+import { executeWithUniqueConstraintTranslation } from "@/infra/database/prisma-operation";
+
+const slugAlreadyInUse = () =>
+  new EntityValidationError([
+    { field: "slug", message: "Slug already in use" },
+  ]);
 
 export default class CompanyRepository implements CompanyGateway {
   constructor(private readonly prisma: PrismaClient) {}
-
-  private getClient(
-    trx?: TransactionContext,
-  ): PrismaClient | PrismaTransactionContext["client"] {
-    if (!trx) return this.prisma;
-    if (trx instanceof PrismaTransactionContext) return trx.client;
-    throw new Error("Unsupported transaction context");
-  }
 
   async findById(
     id: string,
     trx?: TransactionContext,
   ): Promise<Company | null> {
-    const row = await this.getClient(trx).company.findFirst({
+    const row = await resolvePrismaClient(this.prisma, trx).company.findFirst({
       where: { id, deletedAt: null },
     });
     return row ? CompanyModelMapper.toEntity(row) : null;
@@ -35,7 +34,7 @@ export default class CompanyRepository implements CompanyGateway {
     slug: string,
     trx?: TransactionContext,
   ): Promise<Company | null> {
-    const row = await this.getClient(trx).company.findFirst({
+    const row = await resolvePrismaClient(this.prisma, trx).company.findFirst({
       where: { slug: normalizeSlug(slug), deletedAt: null },
     });
     return row ? CompanyModelMapper.toEntity(row) : null;
@@ -45,7 +44,7 @@ export default class CompanyRepository implements CompanyGateway {
     params: SearchParams<CompanyFilter>,
     trx?: TransactionContext,
   ): Promise<SearchResult<Company>> {
-    const client = this.getClient(trx);
+    const client = resolvePrismaClient(this.prisma, trx);
     const builder = new CompaniesQueryBuilder(params);
     const query = builder.build();
     const where = { ...query.where, deletedAt: null };
@@ -69,30 +68,40 @@ export default class CompanyRepository implements CompanyGateway {
   }
 
   async create(company: Company, trx?: TransactionContext): Promise<void> {
-    const client = this.getClient(trx);
-    await client.company.create({
-      data: {
-        id: company.id,
-        name: company.name,
-        slug: company.slug,
-        active: company.active,
-        createdAt: company.createdAt,
-        updatedAt: company.updatedAt,
-      },
-    });
+    const client = resolvePrismaClient(this.prisma, trx);
+    await executeWithUniqueConstraintTranslation(
+      () =>
+        client.company.create({
+          data: {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            active: company.active,
+            createdAt: company.createdAt,
+            updatedAt: company.updatedAt,
+          },
+        }),
+      "slug",
+      slugAlreadyInUse,
+    );
   }
 
   async update(company: Company, trx?: TransactionContext): Promise<void> {
-    const client = this.getClient(trx);
-    await client.company.update({
-      where: { id: company.id },
-      data: {
-        name: company.name,
-        slug: company.slug,
-        active: company.active,
-        updatedAt: company.updatedAt,
-        deletedAt: company.deletedAt,
-      },
-    });
+    const client = resolvePrismaClient(this.prisma, trx);
+    await executeWithUniqueConstraintTranslation(
+      () =>
+        client.company.update({
+          where: { id: company.id },
+          data: {
+            name: company.name,
+            slug: company.slug,
+            active: company.active,
+            updatedAt: company.updatedAt,
+            deletedAt: company.deletedAt,
+          },
+        }),
+      "slug",
+      slugAlreadyInUse,
+    );
   }
 }
