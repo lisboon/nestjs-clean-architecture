@@ -5,6 +5,7 @@ import {
   TransactionOptions,
 } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 import { PrismaTransactionContext } from "./prisma-transaction.context";
+import { isTransactionWriteConflict } from "./prisma-error.inspector";
 
 interface PrismaTransactionManagerOptions {
   maxRetries?: number;
@@ -42,7 +43,7 @@ export class PrismaTransactionManager implements TransactionManager {
           prismaOptions,
         );
       } catch (error) {
-        if (!this.isRetryableConflict(error) || retry >= this.maxRetries) {
+        if (!isTransactionWriteConflict(error) || retry >= this.maxRetries) {
           throw error;
         }
 
@@ -50,25 +51,6 @@ export class PrismaTransactionManager implements TransactionManager {
         retry += 1;
       }
     }
-  }
-
-  private isRetryableConflict(error: unknown): boolean {
-    const isKnownPrismaConflict =
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034";
-
-    if (isKnownPrismaConflict) return true;
-    if (!(error instanceof Error) || error.name !== "DriverAdapterError") {
-      return false;
-    }
-
-    const cause = (error as Error & { cause?: unknown }).cause;
-    return (
-      typeof cause === "object" &&
-      cause !== null &&
-      "kind" in cause &&
-      cause.kind === "TransactionWriteConflict"
-    );
   }
 
   private async wait(delayMs: number): Promise<void> {

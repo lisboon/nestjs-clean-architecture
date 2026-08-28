@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import prisma from "../src/infra/database/prisma.instance";
 import { PrismaTransactionManager } from "../src/infra/database/prisma-transaction.manager";
 import { ForbiddenError } from "../src/modules/@shared/domain/errors/forbidden.error";
+import { EntityValidationError } from "../src/modules/@shared/domain/errors/validation.error";
 import { UserRole } from "../src/modules/@shared/domain/enums";
 import { Company } from "../src/modules/company/domain/company.entity";
 import CompanyRepository from "../src/modules/company/repository/company.repository";
@@ -27,12 +28,16 @@ describe("Persistence (e2e)", () => {
     });
   };
 
-  const makeUser = (companyId: string, role: UserRole): User => {
+  const makeUser = (
+    companyId: string,
+    role: UserRole,
+    email?: string,
+  ): User => {
     const id = randomUUID();
     return User.create({
       id,
       name: `Integration ${id}`,
-      email: `${id}@integration.test`,
+      email: email ?? `${id}@integration.test`,
       password: "$2b$12$integration-hash",
       role,
       companyId,
@@ -144,6 +149,72 @@ describe("Persistence (e2e)", () => {
     expect(["First concurrent update", "Second concurrent update"]).toContain(
       persistedCompany?.name,
     );
+  });
+
+  it("translates a concurrent duplicate slug into a domain validation error", async () => {
+    const firstId = randomUUID();
+    const secondId = randomUUID();
+    const slug = `concurrent-${randomUUID()}`;
+    companyIds.push(firstId, secondId);
+    const firstCompany = Company.create({
+      id: firstId,
+      name: "First duplicate slug",
+      slug,
+    });
+    const secondCompany = Company.create({
+      id: secondId,
+      name: "Second duplicate slug",
+      slug,
+    });
+
+    const results = await Promise.allSettled([
+      companyRepository.create(firstCompany),
+      companyRepository.create(secondCompany),
+    ]);
+    const rejected = results.find((result) => result.status === "rejected");
+
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(rejected).toMatchObject({
+      reason: expect.any(EntityValidationError),
+    });
+    expect(rejected).toMatchObject({
+      reason: expect.objectContaining({
+        name: "EntityValidationError",
+        error: [{ field: "slug", message: "Slug already in use" }],
+      }),
+    });
+    expect(await prisma.company.count({ where: { slug } })).toBe(1);
+  });
+
+  it("translates a concurrent duplicate email into a domain validation error", async () => {
+    const company = makeCompany();
+    const email = `${randomUUID()}@integration.test`;
+    const firstUser = makeUser(company.id, UserRole.USER, email);
+    const secondUser = makeUser(company.id, UserRole.USER, email);
+
+    await companyRepository.create(company);
+
+    const results = await Promise.allSettled([
+      userRepository.create(firstUser),
+      userRepository.create(secondUser),
+    ]);
+    const rejected = results.find((result) => result.status === "rejected");
+
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(rejected).toMatchObject({
+      reason: expect.any(EntityValidationError),
+    });
+    expect(rejected).toMatchObject({
+      reason: expect.objectContaining({
+        name: "EntityValidationError",
+        error: [{ field: "email", message: "Email already in use" }],
+      }),
+    });
+    expect(await prisma.user.count({ where: { email } })).toBe(1);
   });
 
   it("preserves one active admin under concurrent deletion attempts", async () => {
