@@ -7,7 +7,10 @@ import { TransactionContext } from "@/modules/@shared/domain/transaction/transac
 export interface UserGateway {
   findById(id: string, trx?: TransactionContext): Promise<User | null>;
   findByEmail(email: string, trx?: TransactionContext): Promise<User | null>;
-  search(params: SearchParams<UserFilter>): Promise<SearchResult<User>>;
+  search(
+    params: SearchParams<UserFilter>,
+    trx?: TransactionContext,
+  ): Promise<SearchResult<User>>;
   countActiveAdmins(trx?: TransactionContext): Promise<number>;
   countActiveByCompany(
     companyId: string,

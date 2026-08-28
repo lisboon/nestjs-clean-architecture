@@ -5,7 +5,10 @@ import { NotFoundError } from "@/modules/@shared/domain/errors/not-found.error";
 import { ForbiddenError } from "@/modules/@shared/domain/errors/forbidden.error";
 import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
 import { normalizeEmail } from "@/modules/@shared/domain/utils/email";
-import { TransactionManager } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
+import {
+  TransactionContext,
+  TransactionManager,
+} from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 import {
   UpdateUserUseCaseInputDto,
   UpdateUserUseCaseInterface,
@@ -21,13 +24,30 @@ export default class UpdateUserUseCase implements UpdateUserUseCaseInterface {
   async execute(
     data: UpdateUserUseCaseInputDto,
   ): Promise<UpdateUserUseCaseOutputDto> {
-    const user = await this.userGateway.findById(data.id);
+    const mayRemoveAdminPrivileges =
+      (data.role !== undefined && data.role !== UserRole.ADMIN) ||
+      data.active === false;
+
+    const user = mayRemoveAdminPrivileges
+      ? await this.transactionManager.execute((trx) => this.update(data, trx), {
+          isolationLevel: "Serializable",
+        })
+      : await this.update(data);
+
+    return user.toJSON();
+  }
+
+  private async update(
+    data: UpdateUserUseCaseInputDto,
+    trx?: TransactionContext,
+  ): Promise<User> {
+    const user = await this.userGateway.findById(data.id, trx);
     if (!user) {
       throw new NotFoundError(data.id, User);
     }
 
     if (data.email !== undefined && normalizeEmail(data.email) !== user.email) {
-      const existingUser = await this.userGateway.findByEmail(data.email);
+      const existingUser = await this.userGateway.findByEmail(data.email, trx);
       if (existingUser && existingUser.id !== user.id) {
         throw new EntityValidationError([
           { field: "email", message: "Email already in use" },
@@ -42,25 +62,17 @@ export default class UpdateUserUseCase implements UpdateUserUseCaseInterface {
         data.active === false);
 
     if (losesAdminPrivileges) {
-      await this.transactionManager.execute(
-        async (trx) => {
-          const activeAdmins = await this.userGateway.countActiveAdmins(trx);
-          if (activeAdmins <= 1) {
-            throw new ForbiddenError(
-              "Cannot remove privileges from the last active admin",
-            );
-          }
-          this.applyChanges(user, data);
-          await this.userGateway.update(user, trx);
-        },
-        { isolationLevel: "Serializable" },
-      );
-    } else {
-      this.applyChanges(user, data);
-      await this.userGateway.update(user);
+      const activeAdmins = await this.userGateway.countActiveAdmins(trx);
+      if (activeAdmins <= 1) {
+        throw new ForbiddenError(
+          "Cannot remove privileges from the last active admin",
+        );
+      }
     }
 
-    return user.toJSON();
+    this.applyChanges(user, data);
+    await this.userGateway.update(user, trx);
+    return user;
   }
 
   private applyChanges(user: User, data: UpdateUserUseCaseInputDto): void {

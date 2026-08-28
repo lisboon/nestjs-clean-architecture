@@ -20,13 +20,13 @@ export default class DeleteCompanyUseCase implements DeleteCompanyUseCaseInterfa
   async execute(
     data: DeleteCompanyUseCaseInputDto,
   ): Promise<DeleteCompanyUseCaseOutputDto> {
-    const company = await this.companyGateway.findById(data.id);
-    if (!company) {
-      throw new NotFoundError(data.id, Company);
-    }
-
-    await this.transactionManager.execute(
+    return this.transactionManager.execute(
       async (trx) => {
+        const company = await this.companyGateway.findById(data.id, trx);
+        if (!company) {
+          throw new NotFoundError(data.id, Company);
+        }
+
         const activeUsers = await this.userGateway.countActiveByCompany(
           company.id,
           trx,
@@ -36,10 +36,9 @@ export default class DeleteCompanyUseCase implements DeleteCompanyUseCaseInterfa
         }
         company.delete();
         await this.companyGateway.update(company, trx);
+        return { id: company.id, deletedAt: company.deletedAt! };
       },
       { isolationLevel: "Serializable" },
     );
-
-    return { id: company.id, deletedAt: company.deletedAt! };
   }
 }

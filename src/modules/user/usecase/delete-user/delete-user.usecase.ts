@@ -18,28 +18,25 @@ export default class DeleteUserUseCase implements DeleteUserUseCaseInterface {
   async execute(
     data: DeleteUserUseCaseInputDto,
   ): Promise<DeleteUserUseCaseOutputDto> {
-    const user = await this.userGateway.findById(data.id);
-    if (!user) {
-      throw new NotFoundError(data.id, User);
-    }
+    return this.transactionManager.execute(
+      async (trx) => {
+        const user = await this.userGateway.findById(data.id, trx);
+        if (!user) {
+          throw new NotFoundError(data.id, User);
+        }
 
-    if (user.isAdmin && user.active) {
-      await this.transactionManager.execute(
-        async (trx) => {
+        if (user.isAdmin && user.active) {
           const activeAdmins = await this.userGateway.countActiveAdmins(trx);
           if (activeAdmins <= 1) {
             throw new ForbiddenError("Cannot delete the last active admin");
           }
-          user.delete();
-          await this.userGateway.update(user, trx);
-        },
-        { isolationLevel: "Serializable" },
-      );
-    } else {
-      user.delete();
-      await this.userGateway.update(user);
-    }
+        }
 
-    return { id: user.id, deletedAt: user.deletedAt! };
+        user.delete();
+        await this.userGateway.update(user, trx);
+        return { id: user.id, deletedAt: user.deletedAt! };
+      },
+      { isolationLevel: "Serializable" },
+    );
   }
 }

@@ -16,8 +16,11 @@ const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}) =>
   });
 
 const makeSut = ({ user = makeUser(), activeAdmins = 2 } = {}) => {
+  const transactionContext = {};
   const transactionManager = {
-    execute: jest.fn().mockImplementation(async (fn: any) => fn({})),
+    execute: jest
+      .fn()
+      .mockImplementation(async (fn: any) => fn(transactionContext)),
   };
   const userGateway = {
     findById: jest.fn().mockResolvedValue(user),
@@ -31,7 +34,13 @@ const makeSut = ({ user = makeUser(), activeAdmins = 2 } = {}) => {
     userGateway as any,
   );
 
-  return { useCase, user, transactionManager, userGateway };
+  return {
+    useCase,
+    user,
+    transactionContext,
+    transactionManager,
+    userGateway,
+  };
 };
 
 describe("UpdateUserUseCase", () => {
@@ -67,9 +76,10 @@ describe("UpdateUserUseCase", () => {
 
   it("changes role inside a serializable transaction when demoting an admin", async () => {
     const admin = makeUser({ role: UserRole.ADMIN });
-    const { useCase, transactionManager, userGateway } = makeSut({
-      user: admin,
-    });
+    const { useCase, transactionContext, transactionManager, userGateway } =
+      makeSut({
+        user: admin,
+      });
 
     const output = await useCase.execute({
       id: admin.id,
@@ -82,8 +92,41 @@ describe("UpdateUserUseCase", () => {
         isolationLevel: "Serializable",
       },
     );
-    expect(userGateway.countActiveAdmins).toHaveBeenCalledTimes(1);
+    expect(userGateway.countActiveAdmins).toHaveBeenCalledWith(
+      transactionContext,
+    );
+    expect(userGateway.findById).toHaveBeenCalledWith(
+      admin.id,
+      transactionContext,
+    );
+    expect(userGateway.update).toHaveBeenCalledWith(admin, transactionContext);
     expect(output.role).toBe(UserRole.EDITOR);
+  });
+
+  it("uses one transaction context for every protected update operation", async () => {
+    const admin = makeUser({ role: UserRole.ADMIN });
+    const { useCase, transactionContext, userGateway } = makeSut({
+      user: admin,
+    });
+
+    await useCase.execute({
+      id: admin.id,
+      email: "new-email@backend.com.br",
+      role: UserRole.EDITOR,
+    });
+
+    expect(userGateway.findById).toHaveBeenCalledWith(
+      admin.id,
+      transactionContext,
+    );
+    expect(userGateway.findByEmail).toHaveBeenCalledWith(
+      "new-email@backend.com.br",
+      transactionContext,
+    );
+    expect(userGateway.countActiveAdmins).toHaveBeenCalledWith(
+      transactionContext,
+    );
+    expect(userGateway.update).toHaveBeenCalledWith(admin, transactionContext);
   });
 
   it("throws ForbiddenError when demoting the last active admin", async () => {
@@ -105,31 +148,32 @@ describe("UpdateUserUseCase", () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  it("changes the role of an inactive admin without checking active admins", async () => {
+  it("changes the role of an inactive admin transactionally without counting active admins", async () => {
     const admin = makeUser({ role: UserRole.ADMIN });
     admin.deactivate();
-    const { useCase, transactionManager, userGateway } = makeSut({
-      user: admin,
-      activeAdmins: 1,
-    });
+    const { useCase, transactionContext, transactionManager, userGateway } =
+      makeSut({
+        user: admin,
+        activeAdmins: 1,
+      });
 
     const output = await useCase.execute({
       id: admin.id,
       role: UserRole.VIEWER,
     });
 
-    expect(transactionManager.execute).not.toHaveBeenCalled();
+    expect(transactionManager.execute).toHaveBeenCalledTimes(1);
     expect(userGateway.countActiveAdmins).not.toHaveBeenCalled();
-    expect(userGateway.update).toHaveBeenCalledWith(admin);
+    expect(userGateway.update).toHaveBeenCalledWith(admin, transactionContext);
     expect(output.role).toBe(UserRole.VIEWER);
   });
 
-  it("does not open a transaction for non-admin updates", async () => {
+  it("opens a transaction when the requested change could remove admin privileges", async () => {
     const { useCase, user, transactionManager } = makeSut();
 
     await useCase.execute({ id: user.id, active: false });
 
-    expect(transactionManager.execute).not.toHaveBeenCalled();
+    expect(transactionManager.execute).toHaveBeenCalledTimes(1);
   });
 
   it("never changes companyId (it is immutable after creation)", async () => {

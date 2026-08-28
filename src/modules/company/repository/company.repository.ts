@@ -43,19 +43,21 @@ export default class CompanyRepository implements CompanyGateway {
 
   async search(
     params: SearchParams<CompanyFilter>,
+    trx?: TransactionContext,
   ): Promise<SearchResult<Company>> {
+    const client = this.getClient(trx);
     const builder = new CompaniesQueryBuilder(params);
     const query = builder.build();
     const where = { ...query.where, deletedAt: null };
 
     const [rows, total] = await Promise.all([
-      this.prisma.company.findMany({
+      client.company.findMany({
         where,
         ...(query.orderBy ? { orderBy: query.orderBy } : {}),
         skip: query.skip,
         take: query.take,
       }),
-      this.prisma.company.count({ where }),
+      client.company.count({ where }),
     ]);
 
     return new SearchResult({

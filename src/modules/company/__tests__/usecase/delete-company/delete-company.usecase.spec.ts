@@ -7,8 +7,11 @@ const makeCompany = () =>
   Company.create({ name: "Acme Corp", slug: "acme-corp" });
 
 const makeSut = ({ company = makeCompany(), activeUsers = 0 } = {}) => {
+  const transactionContext = {};
   const transactionManager = {
-    execute: jest.fn().mockImplementation(async (fn: any) => fn({})),
+    execute: jest
+      .fn()
+      .mockImplementation(async (fn: any) => fn(transactionContext)),
   };
   const companyGateway = {
     findById: jest.fn().mockResolvedValue(company),
@@ -24,7 +27,14 @@ const makeSut = ({ company = makeCompany(), activeUsers = 0 } = {}) => {
     userGateway as any,
   );
 
-  return { useCase, company, transactionManager, companyGateway, userGateway };
+  return {
+    useCase,
+    company,
+    transactionContext,
+    transactionManager,
+    companyGateway,
+    userGateway,
+  };
 };
 
 describe("DeleteCompanyUseCase", () => {
@@ -32,6 +42,7 @@ describe("DeleteCompanyUseCase", () => {
     const {
       useCase,
       company,
+      transactionContext,
       transactionManager,
       companyGateway,
       userGateway,
@@ -45,9 +56,16 @@ describe("DeleteCompanyUseCase", () => {
     );
     expect(userGateway.countActiveByCompany).toHaveBeenCalledWith(
       company.id,
-      expect.anything(),
+      transactionContext,
     );
-    expect(companyGateway.update).toHaveBeenCalledTimes(1);
+    expect(companyGateway.findById).toHaveBeenCalledWith(
+      company.id,
+      transactionContext,
+    );
+    expect(companyGateway.update).toHaveBeenCalledWith(
+      company,
+      transactionContext,
+    );
     expect(company.deletedAt).toBeInstanceOf(Date);
     expect(company.active).toBe(false);
     expect(output).toEqual({ id: company.id, deletedAt: company.deletedAt });

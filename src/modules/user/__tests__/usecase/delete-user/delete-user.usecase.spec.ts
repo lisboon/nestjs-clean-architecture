@@ -17,8 +17,11 @@ const makeSut = ({
   user = makeUser(UserRole.EDITOR),
   activeAdmins = 2,
 } = {}) => {
+  const transactionContext = {};
   const transactionManager = {
-    execute: jest.fn().mockImplementation(async (fn: any) => fn({})),
+    execute: jest
+      .fn()
+      .mockImplementation(async (fn: any) => fn(transactionContext)),
   };
   const userGateway = {
     findById: jest.fn().mockResolvedValue(user),
@@ -31,17 +34,36 @@ const makeSut = ({
     userGateway as any,
   );
 
-  return { useCase, user, transactionManager, userGateway };
+  return {
+    useCase,
+    user,
+    transactionContext,
+    transactionManager,
+    userGateway,
+  };
 };
 
 describe("DeleteUserUseCase", () => {
-  it("soft deletes a non-admin user without opening a transaction", async () => {
-    const { useCase, user, transactionManager, userGateway } = makeSut();
+  it("soft deletes a non-admin user inside a serializable transaction", async () => {
+    const {
+      useCase,
+      user,
+      transactionContext,
+      transactionManager,
+      userGateway,
+    } = makeSut();
 
     const output = await useCase.execute({ id: user.id });
 
-    expect(transactionManager.execute).not.toHaveBeenCalled();
-    expect(userGateway.update).toHaveBeenCalledTimes(1);
+    expect(transactionManager.execute).toHaveBeenCalledWith(
+      expect.any(Function),
+      { isolationLevel: "Serializable" },
+    );
+    expect(userGateway.findById).toHaveBeenCalledWith(
+      user.id,
+      transactionContext,
+    );
+    expect(userGateway.update).toHaveBeenCalledWith(user, transactionContext);
     expect(user.deletedAt).toBeInstanceOf(Date);
     expect(user.active).toBe(false);
     expect(output).toEqual({ id: user.id, deletedAt: user.deletedAt });
@@ -49,9 +71,8 @@ describe("DeleteUserUseCase", () => {
 
   it("soft deletes an admin inside a serializable transaction", async () => {
     const admin = makeUser(UserRole.ADMIN);
-    const { useCase, transactionManager, userGateway } = makeSut({
-      user: admin,
-    });
+    const { useCase, transactionContext, transactionManager, userGateway } =
+      makeSut({ user: admin });
 
     await useCase.execute({ id: admin.id });
 
@@ -61,7 +82,9 @@ describe("DeleteUserUseCase", () => {
         isolationLevel: "Serializable",
       },
     );
-    expect(userGateway.countActiveAdmins).toHaveBeenCalledTimes(1);
+    expect(userGateway.countActiveAdmins).toHaveBeenCalledWith(
+      transactionContext,
+    );
     expect(admin.deletedAt).toBeInstanceOf(Date);
   });
 
@@ -76,19 +99,20 @@ describe("DeleteUserUseCase", () => {
     expect(admin.deletedAt).toBeUndefined();
   });
 
-  it("deletes an inactive admin without checking active admins", async () => {
+  it("deletes an inactive admin in the same transaction without counting active admins", async () => {
     const admin = makeUser(UserRole.ADMIN);
     admin.deactivate();
-    const { useCase, transactionManager, userGateway } = makeSut({
-      user: admin,
-      activeAdmins: 1,
-    });
+    const { useCase, transactionContext, transactionManager, userGateway } =
+      makeSut({
+        user: admin,
+        activeAdmins: 1,
+      });
 
     await useCase.execute({ id: admin.id });
 
-    expect(transactionManager.execute).not.toHaveBeenCalled();
+    expect(transactionManager.execute).toHaveBeenCalledTimes(1);
     expect(userGateway.countActiveAdmins).not.toHaveBeenCalled();
-    expect(userGateway.update).toHaveBeenCalledWith(admin);
+    expect(userGateway.update).toHaveBeenCalledWith(admin, transactionContext);
     expect(admin.deletedAt).toBeInstanceOf(Date);
   });
 

@@ -39,19 +39,23 @@ export default class UserRepository implements UserGateway {
     return row ? UserModelMapper.toEntity(row) : null;
   }
 
-  async search(params: SearchParams<UserFilter>): Promise<SearchResult<User>> {
+  async search(
+    params: SearchParams<UserFilter>,
+    trx?: TransactionContext,
+  ): Promise<SearchResult<User>> {
+    const client = this.getClient(trx);
     const builder = new UsersQueryBuilder(params);
     const query = builder.build();
     const where = { ...query.where, deletedAt: null };
 
     const [rows, total] = await Promise.all([
-      this.prisma.user.findMany({
+      client.user.findMany({
         where,
         ...(query.orderBy ? { orderBy: query.orderBy } : {}),
         skip: query.skip,
         take: query.take,
       }),
-      this.prisma.user.count({ where }),
+      client.user.count({ where }),
     ]);
 
     return new SearchResult({
