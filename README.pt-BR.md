@@ -206,13 +206,21 @@ A CI também rejeita vulnerabilidades de severidade alta nas dependências de pr
 
 ## Deploy
 
-Gere a imagem de produção com o `Dockerfile` multi-stage (ele compila, remove as dependências de dev e roda com usuário não-root e healthcheck). No deploy, aplique as migrations antes de subir a aplicação:
+O `Dockerfile` multi-stage expõe dois artefatos independentes de deploy:
+
+- o target padrão `runner` contém a aplicação, dependências de produção, usuário não-root e healthcheck;
+- o target `migrator` contém a CLI do Prisma e o histórico de migrations, com `prisma migrate deploy` como entrypoint.
+
+Gere ambos a partir da mesma revisão e execute a imagem de migration uma vez como release job antes de atualizar a aplicação:
 
 ```bash
-pnpm exec prisma migrate deploy
+docker build --target migrator -t nestjs-app-migrator .
+docker run --rm --env DATABASE_URL="$DATABASE_URL" nestjs-app-migrator
+
+docker build --target runner -t nestjs-app-backend .
 ```
 
-Passe as variáveis de ambiente pelo seu orquestrador; elas nunca são embutidas na imagem.
+Isso mantém as ferramentas de build fora da imagem da API sem depender de um checkout de desenvolvimento durante o deploy. A CI gera os dois targets e aplica as migrations pela imagem de migration contra o PostgreSQL. Passe as variáveis de ambiente pelo seu orquestrador; elas nunca são embutidas em nenhuma das imagens.
 
 ## Licença
 
