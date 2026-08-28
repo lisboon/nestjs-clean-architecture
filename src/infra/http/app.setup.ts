@@ -7,8 +7,10 @@ import { ForbiddenErrorFilter } from "./shared/errors/forbidden.filter";
 import { BadLoginErrorFilter } from "./shared/errors/bad-login.filter";
 import { TokenExpiredErrorFilter } from "./shared/errors/token-expired.filter";
 import exceptionFactory from "./shared/errors/exception-factory";
+import { createHttpObservabilityMiddleware } from "./shared/observability/http-observability.middleware";
 
 export function configureApp(app: INestApplication): void {
+  app.use(createHttpObservabilityMiddleware());
   app.use(helmet());
 
   app.useGlobalPipes(

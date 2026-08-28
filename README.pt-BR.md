@@ -142,6 +142,8 @@ As sondas operacionais ficam disponíveis sem autenticação:
 
 A imagem de produção usa o endpoint de readiness no healthcheck do Docker. Ao receber `SIGTERM` ou `SIGINT`, o Nest encerra graciosamente e fecha o pool de conexões do Prisma.
 
+Toda resposta HTTP inclui um `X-Request-Id`. Um identificador válido enviado pelo cliente é preservado; caso contrário, a API gera um UUID. As requisições são registradas com esse identificador, método, caminho, status e duração, usando JSON estruturado em produção. Corpos, query strings e headers de autorização nunca são registrados.
+
 ## Variáveis de ambiente
 
 | Variável              | Descrição                                                |

@@ -1,5 +1,6 @@
 import "dotenv/config";
 import "reflect-metadata";
+import { ConsoleLogger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { configureApp } from "./app.setup";
@@ -8,7 +9,12 @@ import { loadApplicationConfig } from "@/infra/config/application.config";
 
 async function bootstrap() {
   const config = loadApplicationConfig();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new ConsoleLogger({
+      json: config.nodeEnv === "production",
+      colors: config.nodeEnv !== "production",
+    }),
+  });
   app.enableShutdownHooks();
 
   configureApp(app);
