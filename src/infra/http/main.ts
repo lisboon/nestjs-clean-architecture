@@ -9,6 +9,7 @@ import { loadApplicationConfig } from "@/infra/config/application.config";
 async function bootstrap() {
   const config = loadApplicationConfig();
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
   configureApp(app);
 

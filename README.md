@@ -135,6 +135,13 @@ docker compose up --build
 - API at `http://localhost:3001`
 - Prisma Studio at `http://localhost:5555`
 
+Operational probes are available without authentication:
+
+- `GET /health/live` reports whether the HTTP process is running.
+- `GET /health/ready` verifies PostgreSQL connectivity and returns `503` while the application cannot serve traffic.
+
+The production image uses the readiness endpoint for its Docker healthcheck. On `SIGTERM` or `SIGINT`, Nest shuts down gracefully and closes the Prisma connection pool.
+
 ## Environment variables
 
 | Variable              | Description                                              |
