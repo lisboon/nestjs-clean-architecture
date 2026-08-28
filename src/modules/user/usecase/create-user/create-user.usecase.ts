@@ -4,6 +4,10 @@ import { CompanyGateway } from "@/modules/company/gateway/company.gateway";
 import { PasswordHashService } from "@/modules/@shared/domain/services/password-hash.service";
 import { EntityValidationError } from "@/modules/@shared/domain/errors/validation.error";
 import {
+  TransactionContext,
+  TransactionManager,
+} from "@/modules/@shared/domain/transaction/transaction-manager.interface";
+import {
   CreateUserUseCaseInputDto,
   CreateUserUseCaseInterface,
   CreateUserUseCaseOutputDto,
@@ -11,6 +15,7 @@ import {
 
 export default class CreateUserUseCase implements CreateUserUseCaseInterface {
   constructor(
+    private readonly transactionManager: TransactionManager,
     private readonly userGateway: UserGateway,
     private readonly passwordHashService: PasswordHashService,
     private readonly companyGateway: CompanyGateway,
@@ -19,19 +24,7 @@ export default class CreateUserUseCase implements CreateUserUseCaseInterface {
   async execute(
     data: CreateUserUseCaseInputDto,
   ): Promise<CreateUserUseCaseOutputDto> {
-    const existingUser = await this.userGateway.findByEmail(data.email);
-    if (existingUser) {
-      throw new EntityValidationError([
-        { field: "email", message: "Email already in use" },
-      ]);
-    }
-
-    const company = await this.companyGateway.findById(data.companyId);
-    if (!company || !company.active) {
-      throw new EntityValidationError([
-        { field: "companyId", message: "Company not found or inactive" },
-      ]);
-    }
+    await this.validateAvailability(data);
 
     const hashedPassword = await this.passwordHashService.hash(data.password);
 
@@ -44,8 +37,33 @@ export default class CreateUserUseCase implements CreateUserUseCaseInterface {
       avatarUrl: data.avatarUrl,
     });
 
-    await this.userGateway.create(user);
+    await this.transactionManager.execute(
+      async (trx) => {
+        await this.validateAvailability(data, trx);
+        await this.userGateway.create(user, trx);
+      },
+      { isolationLevel: "Serializable" },
+    );
 
     return user.toJSON();
+  }
+
+  private async validateAvailability(
+    data: CreateUserUseCaseInputDto,
+    trx?: TransactionContext,
+  ): Promise<void> {
+    const existingUser = await this.userGateway.findByEmail(data.email, trx);
+    if (existingUser) {
+      throw new EntityValidationError([
+        { field: "email", message: "Email already in use" },
+      ]);
+    }
+
+    const company = await this.companyGateway.findById(data.companyId, trx);
+    if (!company || !company.active) {
+      throw new EntityValidationError([
+        { field: "companyId", message: "Company not found or inactive" },
+      ]);
+    }
   }
 }

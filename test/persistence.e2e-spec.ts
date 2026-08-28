@@ -6,9 +6,12 @@ import { EntityValidationError } from "../src/modules/@shared/domain/errors/vali
 import { UserRole } from "../src/modules/@shared/domain/enums";
 import { Company } from "../src/modules/company/domain/company.entity";
 import CompanyRepository from "../src/modules/company/repository/company.repository";
+import DeleteCompanyUseCase from "../src/modules/company/usecase/delete-company/delete-company.usecase";
 import { User } from "../src/modules/user/domain/user.entity";
 import UserRepository from "../src/modules/user/repository/user.repository";
+import CreateUserUseCase from "../src/modules/user/usecase/create-user/create-user.usecase";
 import DeleteUserUseCase from "../src/modules/user/usecase/delete-user/delete-user.usecase";
+import { PasswordHashService } from "../src/modules/@shared/domain/services/password-hash.service";
 
 describe("Persistence (e2e)", () => {
   const companyIds: string[] = [];
@@ -17,6 +20,10 @@ describe("Persistence (e2e)", () => {
   const transactionManager = new PrismaTransactionManager(prisma, {
     retryDelayMs: 0,
   });
+  const passwordHashService: PasswordHashService = {
+    hash: async () => "$2b$12$integration-hash",
+    compare: async () => true,
+  };
 
   const makeCompany = (): Company => {
     const id = randomUUID();
@@ -215,6 +222,60 @@ describe("Persistence (e2e)", () => {
       }),
     });
     expect(await prisma.user.count({ where: { email } })).toBe(1);
+  });
+
+  it("keeps user creation and company deletion consistent under concurrency", async () => {
+    const company = makeCompany();
+    const createUser = new CreateUserUseCase(
+      transactionManager,
+      userRepository,
+      passwordHashService,
+      companyRepository,
+    );
+    const deleteCompany = new DeleteCompanyUseCase(
+      transactionManager,
+      companyRepository,
+      userRepository,
+    );
+
+    await companyRepository.create(company);
+
+    const results = await Promise.allSettled([
+      createUser.execute({
+        name: "Concurrent User",
+        email: `${randomUUID()}@integration.test`,
+        password: "Sup3rSecret!",
+        role: UserRole.USER,
+        companyId: company.id,
+      }),
+      deleteCompany.execute({ id: company.id }),
+    ]);
+
+    const persistedCompany = await prisma.company.findUnique({
+      where: { id: company.id },
+    });
+    const persistedUsers = await prisma.user.count({
+      where: { companyId: company.id, deletedAt: null },
+    });
+    const rejected = results.find((result) => result.status === "rejected");
+
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      results.filter((result) => result.status === "rejected"),
+    ).toHaveLength(1);
+
+    if (persistedCompany?.deletedAt) {
+      expect(persistedUsers).toBe(0);
+      expect(rejected).toMatchObject({
+        reason: expect.any(EntityValidationError),
+      });
+    } else {
+      expect(persistedCompany?.active).toBe(true);
+      expect(persistedUsers).toBe(1);
+      expect(rejected).toMatchObject({ reason: expect.any(ForbiddenError) });
+    }
   });
 
   it("preserves one active admin under concurrent deletion attempts", async () => {
