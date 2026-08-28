@@ -8,43 +8,35 @@ import { SearchParams } from "@/modules/@shared/repository/search-params";
 import { SearchResult } from "@/modules/@shared/repository/search-result";
 import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 import { normalizeEmail } from "@/modules/@shared/domain/utils/email";
+import { PrismaTransactionContext } from "@/infra/database/prisma-transaction.context";
+import { UserModelMapper } from "./user.model.mapper";
 
 export default class UserRepository implements UserGateway {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private getClient(trx?: TransactionContext): PrismaClient {
-    return (trx as PrismaClient) ?? this.prisma;
+  private getClient(
+    trx?: TransactionContext,
+  ): PrismaClient | PrismaTransactionContext["client"] {
+    if (!trx) return this.prisma;
+    if (trx instanceof PrismaTransactionContext) return trx.client;
+    throw new Error("Unsupported transaction context");
   }
 
-  private toEntity(data: any): User {
-    return new User({
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      role: data.role as UserRole,
-      companyId: data.companyId,
-      avatarUrl: data.avatarUrl ?? undefined,
-      tokenValidAfter: data.tokenValidAfter ?? undefined,
-      active: data.active,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      deletedAt: data.deletedAt ?? undefined,
-    });
-  }
-
-  async findById(id: string): Promise<User | null> {
-    const row = await this.prisma.user.findFirst({
+  async findById(id: string, trx?: TransactionContext): Promise<User | null> {
+    const row = await this.getClient(trx).user.findFirst({
       where: { id, deletedAt: null },
     });
-    return row ? this.toEntity(row) : null;
+    return row ? UserModelMapper.toEntity(row) : null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const row = await this.prisma.user.findFirst({
+  async findByEmail(
+    email: string,
+    trx?: TransactionContext,
+  ): Promise<User | null> {
+    const row = await this.getClient(trx).user.findFirst({
       where: { email: normalizeEmail(email), deletedAt: null },
     });
-    return row ? this.toEntity(row) : null;
+    return row ? UserModelMapper.toEntity(row) : null;
   }
 
   async search(params: SearchParams<UserFilter>): Promise<SearchResult<User>> {
@@ -63,7 +55,7 @@ export default class UserRepository implements UserGateway {
     ]);
 
     return new SearchResult({
-      items: rows.map((row) => this.toEntity(row)),
+      items: rows.map(UserModelMapper.toEntity),
       total,
       currentPage: params.page,
       perPage: params.perPage,

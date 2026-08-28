@@ -5,8 +5,8 @@ import { SearchResult } from "@/modules/@shared/repository/search-result";
 import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 
 export interface CompanyGateway {
-  findById(id: string): Promise<Company | null>;
-  findBySlug(slug: string): Promise<Company | null>;
+  findById(id: string, trx?: TransactionContext): Promise<Company | null>;
+  findBySlug(slug: string, trx?: TransactionContext): Promise<Company | null>;
   search(params: SearchParams<CompanyFilter>): Promise<SearchResult<Company>>;
   create(company: Company, trx?: TransactionContext): Promise<void>;
   update(company: Company, trx?: TransactionContext): Promise<void>;

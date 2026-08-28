@@ -7,38 +7,38 @@ import { SearchParams } from "@/modules/@shared/repository/search-params";
 import { SearchResult } from "@/modules/@shared/repository/search-result";
 import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 import { normalizeSlug } from "@/modules/@shared/domain/utils/slug";
+import { PrismaTransactionContext } from "@/infra/database/prisma-transaction.context";
+import { CompanyModelMapper } from "./company.model.mapper";
 
 export default class CompanyRepository implements CompanyGateway {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private getClient(trx?: TransactionContext): PrismaClient {
-    return (trx as PrismaClient) ?? this.prisma;
+  private getClient(
+    trx?: TransactionContext,
+  ): PrismaClient | PrismaTransactionContext["client"] {
+    if (!trx) return this.prisma;
+    if (trx instanceof PrismaTransactionContext) return trx.client;
+    throw new Error("Unsupported transaction context");
   }
 
-  private toEntity(data: any): Company {
-    return new Company({
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      active: data.active,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      deletedAt: data.deletedAt ?? undefined,
-    });
-  }
-
-  async findById(id: string): Promise<Company | null> {
-    const row = await this.prisma.company.findFirst({
+  async findById(
+    id: string,
+    trx?: TransactionContext,
+  ): Promise<Company | null> {
+    const row = await this.getClient(trx).company.findFirst({
       where: { id, deletedAt: null },
     });
-    return row ? this.toEntity(row) : null;
+    return row ? CompanyModelMapper.toEntity(row) : null;
   }
 
-  async findBySlug(slug: string): Promise<Company | null> {
-    const row = await this.prisma.company.findFirst({
+  async findBySlug(
+    slug: string,
+    trx?: TransactionContext,
+  ): Promise<Company | null> {
+    const row = await this.getClient(trx).company.findFirst({
       where: { slug: normalizeSlug(slug), deletedAt: null },
     });
-    return row ? this.toEntity(row) : null;
+    return row ? CompanyModelMapper.toEntity(row) : null;
   }
 
   async search(
@@ -59,7 +59,7 @@ export default class CompanyRepository implements CompanyGateway {
     ]);
 
     return new SearchResult({
-      items: rows.map((row) => this.toEntity(row)),
+      items: rows.map(CompanyModelMapper.toEntity),
       total,
       currentPage: params.page,
       perPage: params.perPage,

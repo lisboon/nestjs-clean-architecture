@@ -5,8 +5,8 @@ import { SearchResult } from "@/modules/@shared/repository/search-result";
 import { TransactionContext } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
 
 export interface UserGateway {
-  findById(id: string): Promise<User | null>;
-  findByEmail(email: string): Promise<User | null>;
+  findById(id: string, trx?: TransactionContext): Promise<User | null>;
+  findByEmail(email: string, trx?: TransactionContext): Promise<User | null>;
   search(params: SearchParams<UserFilter>): Promise<SearchResult<User>>;
   countActiveAdmins(trx?: TransactionContext): Promise<number>;
   countActiveByCompany(
