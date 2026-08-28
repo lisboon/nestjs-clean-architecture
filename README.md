@@ -206,13 +206,21 @@ CI also rejects high-severity vulnerabilities in production dependencies. The Pr
 
 ## Deployment
 
-Build the production image with the multi-stage `Dockerfile` (it compiles, prunes dev dependencies and runs as a non-root user with a healthcheck). On deploy, apply migrations before starting the app:
+The multi-stage `Dockerfile` exposes two independent deployment artifacts:
+
+- the default `runner` target contains the application, production dependencies, a non-root user, and a healthcheck;
+- the `migrator` target contains the Prisma CLI and migration history, with `prisma migrate deploy` as its entrypoint.
+
+Build both from the same revision and run the migration image once as a release job before rolling out the application:
 
 ```bash
-pnpm exec prisma migrate deploy
+docker build --target migrator -t nestjs-app-migrator .
+docker run --rm --env DATABASE_URL="$DATABASE_URL" nestjs-app-migrator
+
+docker build --target runner -t nestjs-app-backend .
 ```
 
-Provide the environment variables through your orchestrator; they're never baked into the image.
+This keeps build-time tooling out of the long-running API image without depending on a developer checkout during deployment. CI builds both targets and applies the migrations from the migration image against PostgreSQL. Provide environment variables through your orchestrator; they are never baked into either image.
 
 ## License
 

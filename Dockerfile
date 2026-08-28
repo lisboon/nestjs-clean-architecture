@@ -4,19 +4,18 @@ ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
     HUSKY=0
 
-RUN npm install -g pnpm@11.1.1
-
-WORKDIR /app
-
-FROM base AS builder
-
-RUN apt-get update -y \
+RUN npm install -g pnpm@11.1.1 \
+  && apt-get update -y \
   && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /app
+
+FROM base AS dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
+FROM dependencies AS builder
 COPY prisma.config.ts nest-cli.json tsconfig.json tsconfig.build.json ./
 COPY prisma/ ./prisma/
 COPY src/ ./src/
@@ -26,6 +25,17 @@ RUN pnpm prisma:generate \
   && pnpm prune --prod --ignore-scripts \
   && test ! -e node_modules/prisma \
   && test ! -e node_modules/@prisma/client
+
+FROM dependencies AS migrator
+
+ENV NODE_ENV=production
+
+COPY --chown=node:node prisma.config.ts ./
+COPY --chown=node:node prisma/ ./prisma/
+
+USER node
+
+CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
 
 FROM node:24-bookworm-slim AS runner
 
