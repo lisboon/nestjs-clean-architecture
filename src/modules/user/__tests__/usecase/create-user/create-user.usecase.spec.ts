@@ -16,6 +16,12 @@ const makeSut = ({
   existingUserByEmail = null,
   company = { id: COMPANY_ID, active: true },
 } = {}) => {
+  const transactionContext = {};
+  const transactionManager = {
+    execute: jest
+      .fn()
+      .mockImplementation(async (fn: any) => fn(transactionContext)),
+  };
   const userGateway = {
     findByEmail: jest.fn().mockResolvedValue(existingUserByEmail),
     create: jest.fn().mockResolvedValue(undefined),
@@ -28,24 +34,54 @@ const makeSut = ({
   };
 
   const useCase = new CreateUserUseCase(
+    transactionManager as any,
     userGateway as any,
     passwordHashService as any,
     companyGateway as any,
   );
 
-  return { useCase, userGateway, passwordHashService, companyGateway };
+  return {
+    useCase,
+    transactionContext,
+    transactionManager,
+    userGateway,
+    passwordHashService,
+    companyGateway,
+  };
 };
 
 describe("CreateUserUseCase", () => {
   it("hashes password, persists and returns the user without password", async () => {
-    const { useCase, userGateway, passwordHashService, companyGateway } =
-      makeSut();
+    const {
+      useCase,
+      transactionContext,
+      transactionManager,
+      userGateway,
+      passwordHashService,
+      companyGateway,
+    } = makeSut();
 
     const output = await useCase.execute(validInput());
 
-    expect(companyGateway.findById).toHaveBeenCalledWith(COMPANY_ID);
+    expect(transactionManager.execute).toHaveBeenCalledWith(
+      expect.any(Function),
+      { isolationLevel: "Serializable" },
+    );
+    expect(companyGateway.findById).toHaveBeenCalledWith(
+      COMPANY_ID,
+      transactionContext,
+    );
+    expect(userGateway.findByEmail).toHaveBeenCalledWith(
+      "carlos@backend.com.br",
+      transactionContext,
+    );
+    expect(userGateway.findByEmail).toHaveBeenCalledTimes(2);
+    expect(companyGateway.findById).toHaveBeenCalledTimes(2);
     expect(passwordHashService.hash).toHaveBeenCalledWith("SuperSecret99");
-    expect(userGateway.create).toHaveBeenCalledTimes(1);
+    expect(userGateway.create).toHaveBeenCalledWith(
+      expect.anything(),
+      transactionContext,
+    );
     expect(output).toMatchObject({
       name: "Carlos Lima",
       email: "carlos@backend.com.br",
@@ -57,21 +93,27 @@ describe("CreateUserUseCase", () => {
   });
 
   it("throws EntityValidationError when email is already taken", async () => {
-    const { useCase, userGateway } = makeSut();
+    const { useCase, transactionManager, userGateway, passwordHashService } =
+      makeSut();
     userGateway.findByEmail.mockResolvedValue({ id: "existing-id" });
 
     await expect(useCase.execute(validInput())).rejects.toBeInstanceOf(
       EntityValidationError,
     );
+    expect(passwordHashService.hash).not.toHaveBeenCalled();
+    expect(transactionManager.execute).not.toHaveBeenCalled();
     expect(userGateway.create).not.toHaveBeenCalled();
   });
 
   it("throws EntityValidationError when the company does not exist", async () => {
-    const { useCase, userGateway } = makeSut({ company: null as any });
+    const { useCase, transactionManager, userGateway, passwordHashService } =
+      makeSut({ company: null as any });
 
     await expect(useCase.execute(validInput())).rejects.toBeInstanceOf(
       EntityValidationError,
     );
+    expect(passwordHashService.hash).not.toHaveBeenCalled();
+    expect(transactionManager.execute).not.toHaveBeenCalled();
     expect(userGateway.create).not.toHaveBeenCalled();
   });
 

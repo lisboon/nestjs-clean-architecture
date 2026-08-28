@@ -33,6 +33,7 @@ export default class UserFacadeFactory {
       new FindUserByIdUseCase(userRepository),
       new FindAllUsersUseCase(userRepository),
       new CreateUserUseCase(
+        transactionManager,
         userRepository,
         passwordHashService,
         companyRepository,
