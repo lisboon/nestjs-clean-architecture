@@ -15,8 +15,12 @@ describe("AppController", () => {
   });
 
   describe("root", () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe("Hello World!");
+    it("returns API metadata", () => {
+      expect(appController.getInfo()).toEqual({
+        name: "NestJS Clean Architecture API",
+        description: "DDD and Clean Architecture backend template",
+        version: "0.0.1",
+      });
     });
   });
 });

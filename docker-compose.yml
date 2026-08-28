@@ -10,7 +10,6 @@ services:
       - /app/node_modules
     ports:
       - "3001:3001"
-      - "5555:5555"
     environment:
       - NODE_ENV=development
       - PORT=3001

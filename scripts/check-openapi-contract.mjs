@@ -27,6 +27,7 @@ try {
   );
 
   const requiredSchemas = [
+    "ApiInfoResponseDto",
     "LoginBodyDto",
     "CreateUserBodyDto",
     "UpdateUserBodyDto",
@@ -55,6 +56,7 @@ try {
   }
 
   const documentedOperations = [
+    ["/", "get", "200"],
     ["/auth/login", "post", "201"],
     ["/auth/me", "get", "200"],
     ["/users", "post", "201"],

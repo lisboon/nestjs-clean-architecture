@@ -3,10 +3,11 @@ import "reflect-metadata";
 import { ConsoleLogger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { configureApp } from "./app.setup";
+import { configureApp, configureCors } from "./app.setup";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { loadApplicationConfig } from "@/infra/config/application.config";
 import { join } from "node:path";
+import { API_INFO } from "./api-info.response.dto";
 
 async function bootstrap() {
   const config = loadApplicationConfig();
@@ -20,12 +21,7 @@ async function bootstrap() {
 
   configureApp(app);
 
-  app.enableCors({
-    origin: config.corsOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  });
+  configureCors(app, config.corsOrigins);
 
   if (config.nodeEnv !== "production") {
     const { default: metadata } = await import(
@@ -33,9 +29,9 @@ async function bootstrap() {
     );
     await SwaggerModule.loadPluginMetadata(metadata);
     const swaggerConfig = new DocumentBuilder()
-      .setTitle("NestJs API")
-      .setDescription("Plataforma digital NestJs — Backend API")
-      .setVersion("0.1.0")
+      .setTitle(API_INFO.name)
+      .setDescription(API_INFO.description)
+      .setVersion(API_INFO.version)
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
