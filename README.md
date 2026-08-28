@@ -192,6 +192,8 @@ In non-production environments, Swagger is served at:
 http://localhost:3001/api-docs
 ```
 
+The OpenAPI schemas are generated from transport DTOs at build time. CI verifies that request and response schemas remain present and that sensitive fields such as passwords are not exposed in response models.
+
 ## Code quality
 
 ```bash

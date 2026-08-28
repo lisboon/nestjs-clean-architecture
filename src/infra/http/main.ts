@@ -6,6 +6,7 @@ import { AppModule } from "./app.module";
 import { configureApp } from "./app.setup";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { loadApplicationConfig } from "@/infra/config/application.config";
+import { join } from "node:path";
 
 async function bootstrap() {
   const config = loadApplicationConfig();
@@ -27,6 +28,10 @@ async function bootstrap() {
   });
 
   if (config.nodeEnv !== "production") {
+    const { default: metadata } = await import(
+      join(__dirname, "../../metadata.js")
+    );
+    await SwaggerModule.loadPluginMetadata(metadata);
     const swaggerConfig = new DocumentBuilder()
       .setTitle("NestJs API")
       .setDescription("Plataforma digital NestJs — Backend API")
