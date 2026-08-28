@@ -146,12 +146,14 @@ docker compose up --build
 | `CORS_ORIGINS`        | Lista de origens permitidas, separadas por vírgula       |
 | `JWT_SECRET`          | Segredo de assinatura do JWT (mín. 32 chars fora de test)|
 | `JWT_EXPIRES_IN`      | Tempo de vida do token (ex.: `7d`)                       |
-| `BCRYPT_ROUNDS`       | Custo do bcrypt (mín. 10)                                |
+| `BCRYPT_ROUNDS`       | Custo do bcrypt (de 10 a 15)                             |
 | `THROTTLE_LIMIT`      | Limite padrão de requisições por janela                  |
 | `THROTTLE_WINDOW_MS`  | Janela do rate limit em milissegundos                    |
 | `SEED_ADMIN_EMAIL`    | Email do admin criado pelo seed                          |
 | `SEED_ADMIN_PASSWORD` | Senha do admin criado pelo seed                          |
 | `SEED_ADMIN_NAME`     | Nome de exibição do admin do seed                        |
+
+A configuração de runtime é interpretada e validada antes da aplicação iniciar. Valores inválidos são informados juntos, incluindo URLs, durações e intervalos numéricos malformados.
 
 ## Testes
 
