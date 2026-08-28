@@ -194,6 +194,8 @@ http://localhost:3001/api-docs
 
 The OpenAPI schemas are generated from transport DTOs at build time. CI verifies that request and response schemas remain present and that sensitive fields such as passwords are not exposed in response models.
 
+Expected client errors are documented per operation. Simple errors use `{ statusCode, error, message }`; validation errors keep the same envelope and return an array of `{ field, message }` issues. Domain errors remain independent of HTTP status codes and are translated by exception filters at the transport boundary.
+
 ## Code quality
 
 ```bash

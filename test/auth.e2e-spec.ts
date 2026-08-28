@@ -72,10 +72,16 @@ describe("Auth (e2e)", () => {
   });
 
   it("rejects login with the wrong password (400)", async () => {
-    await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .post("/auth/login")
       .send({ email: ADMIN.email, password: "wrong-password" })
       .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      error: "Bad Login",
+      message: "Incorrect email address or password",
+    });
   });
 
   it("rejects login with an invalid email payload (422)", async () => {
@@ -125,7 +131,15 @@ describe("Auth (e2e)", () => {
   });
 
   it("rejects GET /auth/me without a token (401)", async () => {
-    await request(app.getHttpServer()).get("/auth/me").expect(401);
+    const response = await request(app.getHttpServer())
+      .get("/auth/me")
+      .expect(401);
+
+    expect(response.body).toEqual({
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Authentication token not provided",
+    });
   });
 
   it("rejects GET /auth/me with a malformed token (401)", async () => {
@@ -133,5 +147,23 @@ describe("Auth (e2e)", () => {
       .get("/auth/me")
       .set("Authorization", "Bearer not-a-real-jwt")
       .expect(401);
+  });
+
+  it("returns the documented error contract when login is throttled", async () => {
+    let response: request.Response | undefined;
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      response = await request(app.getHttpServer())
+        .post("/auth/login")
+        .send({ email: "not-an-email", password: "whatever" });
+      if (response.status === 429) break;
+    }
+
+    expect(response?.status).toBe(429);
+    expect(response?.body).toEqual({
+      statusCode: 429,
+      error: "Too Many Requests",
+      message: "Too many requests",
+    });
   });
 });

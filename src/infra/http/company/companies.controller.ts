@@ -12,9 +12,14 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth-guard";
 import { RolesGuard } from "../auth/roles-guard";
@@ -30,9 +35,17 @@ import {
   CompanyResponseDto,
   DeleteCompanyResponseDto,
 } from "./dto/company.response.dto";
+import {
+  HttpErrorResponseDto,
+  ValidationErrorResponseDto,
+} from "../shared/errors/error.response.dto";
 
 @ApiTags("Companies")
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+@ApiForbiddenResponse({ type: HttpErrorResponseDto })
+@ApiUnprocessableEntityResponse({ type: ValidationErrorResponseDto })
+@ApiTooManyRequestsResponse({ type: HttpErrorResponseDto })
 @Controller("companies")
 @UseGuards(AuthGuard, RolesGuard)
 export class CompaniesController {
@@ -58,6 +71,7 @@ export class CompaniesController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Find company by id (admin only)" })
   @ApiOkResponse({ type: CompanyResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async findById(@Param() params: UuidParamDto) {
     return this.companyService.findById({ id: params.id });
   }
@@ -66,6 +80,7 @@ export class CompaniesController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Update company (admin only)" })
   @ApiOkResponse({ type: CompanyResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async update(
     @Param() params: UuidParamDto,
     @Body() body: UpdateCompanyBodyDto,
@@ -77,6 +92,7 @@ export class CompaniesController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Soft delete company (admin only)" })
   @ApiOkResponse({ type: DeleteCompanyResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async delete(@Param() params: UuidParamDto) {
     return this.companyService.delete({ id: params.id });
   }

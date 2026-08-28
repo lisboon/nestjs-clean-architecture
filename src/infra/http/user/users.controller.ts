@@ -13,9 +13,14 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
 import { AuthGuard, JwtPayload } from "../auth/auth-guard";
 import { RolesGuard } from "../auth/roles-guard";
@@ -33,9 +38,17 @@ import {
   UserResponseDto,
   UsersPageResponseDto,
 } from "./dto/user.response.dto";
+import {
+  HttpErrorResponseDto,
+  ValidationErrorResponseDto,
+} from "../shared/errors/error.response.dto";
 
 @ApiTags("Users")
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+@ApiForbiddenResponse({ type: HttpErrorResponseDto })
+@ApiUnprocessableEntityResponse({ type: ValidationErrorResponseDto })
+@ApiTooManyRequestsResponse({ type: HttpErrorResponseDto })
 @Controller("users")
 @UseGuards(AuthGuard, RolesGuard)
 export class UsersController {
@@ -76,6 +89,7 @@ export class UsersController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Find user by id (admin only)" })
   @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async findById(@Param() params: UuidParamDto) {
     return this.userService.findById({ id: params.id });
   }
@@ -84,6 +98,7 @@ export class UsersController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Update user (admin only)" })
   @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async update(@Param() params: UuidParamDto, @Body() body: UpdateUserBodyDto) {
     return this.userService.update({ id: params.id, ...body });
   }
@@ -92,6 +107,7 @@ export class UsersController {
   @Roles({ role: UserRole.ADMIN })
   @ApiOperation({ summary: "Soft delete user (admin only)" })
   @ApiOkResponse({ type: DeleteUserResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   async delete(@Param() params: UuidParamDto) {
     return this.userService.delete({ id: params.id });
   }

@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { Response } from "express";
 import { UnauthorizedError } from "@/modules/@shared/domain/errors/unauthorized.error";
+import { sendHttpError } from "./http-error-response";
 
 @Catch(UnauthorizedError, UnauthorizedException)
 export class UnauthorizedErrorFilter implements ExceptionFilter {
@@ -16,10 +17,11 @@ export class UnauthorizedErrorFilter implements ExceptionFilter {
   ) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    response.status(HttpStatus.UNAUTHORIZED).json({
-      statusCode: HttpStatus.UNAUTHORIZED,
-      error: "Unauthorized",
-      message: exception.message,
-    });
+    sendHttpError(
+      response,
+      HttpStatus.UNAUTHORIZED,
+      "Unauthorized",
+      exception.message,
+    );
   }
 }

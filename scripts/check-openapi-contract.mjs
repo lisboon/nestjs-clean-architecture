@@ -55,7 +55,7 @@ try {
   }
 
   const documentedOperations = [
-    ["/auth/login", "post", "200"],
+    ["/auth/login", "post", "201"],
     ["/auth/me", "get", "200"],
     ["/users", "post", "201"],
     ["/users", "get", "200"],
@@ -80,6 +80,25 @@ try {
       operation.responses[status]?.content?.["application/json"]?.schema,
       `OpenAPI response ${status} for ${method.toUpperCase()} ${path} has no schema`,
     );
+  }
+
+  const documentedErrors = [
+    ["/auth/login", "post", ["400", "422", "429"]],
+    ["/auth/me", "get", ["401", "429"]],
+    ["/users", "post", ["401", "403", "422", "429"]],
+    ["/users/{id}", "get", ["401", "403", "404", "422"]],
+    ["/companies", "post", ["401", "403", "422", "429"]],
+    ["/companies/{id}", "delete", ["401", "403", "404", "422"]],
+  ];
+
+  for (const [path, method, statuses] of documentedErrors) {
+    const operation = document.paths[path]?.[method];
+    for (const status of statuses) {
+      assert(
+        operation?.responses[status]?.content?.["application/json"]?.schema,
+        `OpenAPI error ${status} for ${method.toUpperCase()} ${path} has no schema`,
+      );
+    }
   }
 
   const userSchema = document.components?.schemas?.UserResponseDto;
