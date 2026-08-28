@@ -1,4 +1,6 @@
-export type TransactionContext = unknown;
+export abstract class TransactionContext {
+  protected constructor() {}
+}
 
 export type TransactionIsolationLevel =
   "ReadUncommitted" | "ReadCommitted" | "RepeatableRead" | "Serializable";

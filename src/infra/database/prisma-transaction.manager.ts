@@ -4,6 +4,7 @@ import {
   TransactionContext,
   TransactionOptions,
 } from "@/modules/@shared/domain/transaction/transaction-manager.interface";
+import { PrismaTransactionContext } from "./prisma-transaction.context";
 
 export class PrismaTransactionManager implements TransactionManager {
   constructor(private readonly prisma: PrismaClient) {}
@@ -18,6 +19,9 @@ export class PrismaTransactionManager implements TransactionManager {
             Prisma.TransactionIsolationLevel[options.isolationLevel],
         }
       : undefined;
-    return this.prisma.$transaction(async (tx) => fn(tx), prismaOptions);
+    return this.prisma.$transaction(
+      async (tx) => fn(new PrismaTransactionContext(tx)),
+      prismaOptions,
+    );
   }
 }
