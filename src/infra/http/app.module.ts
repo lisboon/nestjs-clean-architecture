@@ -7,6 +7,11 @@ import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
 import { CompanyModule } from "./company/company.module";
 import { loadApplicationConfig } from "@/infra/config/application.config";
+import prisma from "@/infra/database/prisma.instance";
+import { PRISMA_CLIENT } from "@/infra/database/prisma.provider";
+import { PrismaLifecycleService } from "@/infra/database/prisma-lifecycle.service";
+import { HealthController } from "./health/health.controller";
+import { HealthService } from "./health/health.service";
 
 const config = loadApplicationConfig();
 
@@ -25,7 +30,13 @@ const config = loadApplicationConfig();
     UserModule,
     CompanyModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  controllers: [AppController, HealthController],
+  providers: [
+    AppService,
+    HealthService,
+    PrismaLifecycleService,
+    { provide: PRISMA_CLIENT, useValue: prisma },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
