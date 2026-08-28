@@ -202,6 +202,8 @@ pnpm typecheck   # tsc --noEmit
 
 Commits follow the [Conventional Commits](https://www.conventionalcommits.org/) spec, enforced by commitlint through a Husky hook, and lint-staged runs ESLint on staged files before each commit. CI runs lint, type-check, build, the full test suite, a Docker build and a Prisma schema-drift check on every push and pull request.
 
+CI also rejects high-severity vulnerabilities in production dependencies. The Prisma CLI and `@prisma/client` generator stay in `devDependencies`; the production image contains only the generated client and its runtime utilities. Its Docker build fails if either development package leaks back into the runtime layer.
+
 ## Deployment
 
 Build the production image with the multi-stage `Dockerfile` (it compiles, prunes dev dependencies and runs as a non-root user with a healthcheck). On deploy, apply migrations before starting the app:

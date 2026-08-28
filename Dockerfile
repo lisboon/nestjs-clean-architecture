@@ -23,7 +23,9 @@ COPY src/ ./src/
 
 RUN pnpm prisma:generate \
   && pnpm build \
-  && pnpm prune --prod --ignore-scripts
+  && pnpm prune --prod --ignore-scripts \
+  && test ! -e node_modules/prisma \
+  && test ! -e node_modules/@prisma/client
 
 FROM node:24-bookworm-slim AS runner
 
