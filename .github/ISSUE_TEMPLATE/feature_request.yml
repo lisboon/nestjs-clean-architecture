@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a concrete improvement to the template
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which real use case is not adequately supported today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Explain the behavior, architectural placement and alternatives considered.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Trade-offs
+      description: What complexity, compatibility or operational cost would this introduce?
+    validations:
+      required: true
