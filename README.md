@@ -133,7 +133,14 @@ docker compose up --build
 ```
 
 - API at `http://localhost:3001`
-- Prisma Studio at `http://localhost:5555`
+
+To inspect the containerized database with Prisma Studio, run it on the host in another terminal:
+
+```bash
+pnpm exec prisma studio
+```
+
+It uses the `DATABASE_URL` from `.env` and is available at `http://localhost:5555`.
 
 Operational probes are available without authentication:
 
@@ -142,7 +149,7 @@ Operational probes are available without authentication:
 
 The production image uses the readiness endpoint for its Docker healthcheck. On `SIGTERM` or `SIGINT`, Nest shuts down gracefully and closes the Prisma connection pool.
 
-Every HTTP response includes an `X-Request-Id`. A valid caller-provided ID is preserved; otherwise the API generates a UUID. Requests are logged with that ID, method, path, status and duration, using structured JSON in production. Bodies, query strings and authorization headers are never logged.
+Every HTTP response includes an `X-Request-Id`. A valid caller-provided ID is preserved; otherwise the API generates a UUID. CORS allows browser clients to send the header and exposes it to frontend code. Requests are logged with that ID, method, path, status and duration, using structured JSON in production. Bodies, query strings and authorization headers are never logged.
 
 ## Environment variables
 

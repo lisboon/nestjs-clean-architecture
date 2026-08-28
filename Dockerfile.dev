@@ -1,4 +1,4 @@
-FROM node:26-bookworm-slim
+FROM node:24-bookworm-slim
 
 ENV NODE_ENV=development \
     PNPM_HOME=/pnpm \
@@ -17,7 +17,6 @@ COPY prisma/ ./prisma/
 
 RUN pnpm install --frozen-lockfile
 
-# 3001 = API | 5555 = Prisma Studio
-EXPOSE 3001 5555
+EXPOSE 3001
 
 CMD ["pnpm", "start:dev"]

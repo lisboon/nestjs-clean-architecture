@@ -133,7 +133,14 @@ docker compose up --build
 ```
 
 - API em `http://localhost:3001`
-- Prisma Studio em `http://localhost:5555`
+
+Para inspecionar o banco do container com o Prisma Studio, execute-o no host em outro terminal:
+
+```bash
+pnpm exec prisma studio
+```
+
+Ele usa a `DATABASE_URL` do `.env` e fica disponível em `http://localhost:5555`.
 
 As sondas operacionais ficam disponíveis sem autenticação:
 
@@ -142,7 +149,7 @@ As sondas operacionais ficam disponíveis sem autenticação:
 
 A imagem de produção usa o endpoint de readiness no healthcheck do Docker. Ao receber `SIGTERM` ou `SIGINT`, o Nest encerra graciosamente e fecha o pool de conexões do Prisma.
 
-Toda resposta HTTP inclui um `X-Request-Id`. Um identificador válido enviado pelo cliente é preservado; caso contrário, a API gera um UUID. As requisições são registradas com esse identificador, método, caminho, status e duração, usando JSON estruturado em produção. Corpos, query strings e headers de autorização nunca são registrados.
+Toda resposta HTTP inclui um `X-Request-Id`. Um identificador válido enviado pelo cliente é preservado; caso contrário, a API gera um UUID. O CORS permite que clientes web enviem esse header e o expõe ao código do frontend. As requisições são registradas com esse identificador, método, caminho, status e duração, usando JSON estruturado em produção. Corpos, query strings e headers de autorização nunca são registrados.
 
 ## Variáveis de ambiente
 
