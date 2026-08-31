@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
@@ -37,7 +37,7 @@ USER node
 
 CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
 
-FROM node:24-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 
 ENV NODE_ENV=production \
     PORT=3001
